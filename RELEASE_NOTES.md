@@ -1,5 +1,8 @@
 Free gain-staging utility for macOS (Apple Silicon), VST3, Audio Unit and CLAP. By Dani Koenig.
 
+### v1.5.4
+- **Fix:** the PDF manuals are now really attached to the release
+
 ### v1.5.3
 - **Manual:** PDF manual in English and German (Gain-Manual-EN.pdf, Gain-Manual-DE.pdf), included in the installer folder and attached to the release
 
