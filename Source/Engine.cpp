@@ -163,7 +163,7 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
     // Anzeigen
     double ms = 0.0;
     for (int c = 0; c < numCh; ++c) ms += ch[c].ms;
-    rmsDb = 10.0f * (float) std::log10 (ms / numCh + 1.0e-12);
+    rmsDb = 10.0f * (float) std::log10 (ms / numCh + 1.0e-12) + rmsOffsetDb;
 
     const double dt = (double) n / fs;
     if (blockPeak >= peakLin) { peakLin = blockPeak; peakHold = 1.5; }
@@ -179,7 +179,7 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
             calActive = false; calProgress = 0.0f;
             if (calValid >= 5)    // mindestens 0.5 s Signal
             {
-                const float measured = 10.0f * (float) std::log10 (calTotalPower / (double) calValid + 1.0e-20);
+                const float measured = 10.0f * (float) std::log10 (calTotalPower / (double) calValid + 1.0e-20) + rmsOffsetDb;
                 calResultDb = std::max (-maxGainDb, std::min (maxGainDb, p.targetDb - measured));
                 calDone = true;
             }

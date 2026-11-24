@@ -90,20 +90,20 @@ int main()
         std::printf ("      true peak: %.2f dBFS (Sample-Peak -3.01)\n", pk);
         CHECK (pk > -0.6 && pk < 0.3, "true peak sees inter-sample peak");
     }
-    { // RMS-Anzeige: Sinus -18 dBFS Spitze => -21 dBFS RMS
+    { // RMS-Anzeige (AES-17): Sinus -18 dBFS Spitze => -18 (wie VUMT CAL -18 = 0 VU)
         GainEngine e; e.prepare (fs);
         run (e, sine (fs, 1000, std::pow (10.0, -18.0 / 20.0), 96000), p);
         std::printf ("      rms: %.2f\n", e.rmsDb.load());
-        CHECK (std::abs (e.rmsDb.load() + 21.0) < 0.3, "rms meter");
+        CHECK (std::abs (e.rmsDb.load() + 18.0) < 0.3, "rms meter");
     }
-    { // Calibration: Signal bei ca. -6 dB RMS, Ziel -18 => Gain -12 dB
+    { // Calibration: Sinus mit -3 dBFS Spitze (AES-17: -3), Ziel -18 => Gain -15 dB
         GainEngine e; e.prepare (fs); p.targetDb = -18.0f; p.gainDb = 7.0f;   // Gain darf die Messung nicht beeinflussen
         e.startCalibration();
-        auto in = sine (fs, 440, std::pow (10.0, -3.0 / 20.0), 48000 * 7);   // RMS = -6 dBFS
+        auto in = sine (fs, 440, std::pow (10.0, -3.0 / 20.0), 48000 * 7);   // Spitze -3 dBFS
         run (e, in, p);
         float g = 0; const bool done = e.popCalibrationResult (g);
         std::printf ("      calibration gain: %.2f\n", g);
-        CHECK (done && std::abs (g + 12.0f) < 0.3f, "calibration result -12 dB");
+        CHECK (done && std::abs (g + 15.0f) < 0.3f, "calibration result -15 dB");
     }
     { // Calibration bei Stille: Fehler, kein Ergebnis
         GainEngine e; e.prepare (fs);
