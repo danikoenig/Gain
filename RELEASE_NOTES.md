@@ -1,5 +1,8 @@
 Free gain-staging utility for macOS (Apple Silicon), VST3, Audio Unit and CLAP. By Dani Koenig.
 
+### v1.5.3
+- **Manual:** PDF manual in English and German (Gain-Manual-EN.pdf, Gain-Manual-DE.pdf), included in the installer folder and attached to the release
+
 ### v1.5.2
 - **Themes renamed:** Init (the original), Light Gray, Dark, Colorblind. A theme chosen before keeps its position
 - **Fonts per theme:** Init and Colorblind keep the standard JUCE font like the other plugins; Light Gray uses Avenir Next (a friendly humanist sans, closer to Ableton / Bitwig); Dark uses Helvetica Neue
