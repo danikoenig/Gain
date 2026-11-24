@@ -168,6 +168,25 @@ int main()
         std::printf ("      kick loop: true RMS %.2f dBFS, calibration gain %.2f dB (expected %.2f)\n", rmsIn, g, -18.0 - rmsIn);
         CHECK (std::abs (g - (-18.0f - (float) rmsIn)) < 0.5f, "calibration lands the TRUE RMS on target (peaky material)");
     }
+    { // Peak-Sicherung: Kick-Loop auf -10 dBFS RMS kalibrieren wuerde die Spitzen weit ueber -3 dBFS bringen
+        GainEngine e; e.prepare (fs); GainParams q; q.targetDb = -10.0f;
+        std::vector<float> x (48000 * 6, 0.0f);
+        for (int k = 0; k < 12; ++k)
+            for (int i = 0; i < 12000; ++i)
+            {
+                const size_t n = (size_t) k * 24000 + i; if (n >= x.size()) break;
+                x[n] = (float) (0.9 * std::exp (-i / 2500.0) * std::sin (2.0 * M_PI * 60.0 * i / fs));
+            }
+        for (size_t i = 0; i < x.size(); ++i) x[i] += 0.005f * (float) std::sin (2.0 * M_PI * 3137.0 * i / fs);
+        auto in = x;
+        e.startCalibration();
+        run (e, x, q);
+        float g = 0; const bool done = e.popCalibrationResult (g);
+        float pk = 0; for (size_t i = 0; i < 48000 * 5; ++i) pk = std::max (pk, std::abs (in[i]));
+        const float peakAfter = 20.0f * std::log10 (pk) + g;
+        std::printf ("      limited: gain %.2f dB, sample peak after gain %.2f dBFS\n", g, peakAfter);
+        CHECK (done && e.popCalibrationLimited() && peakAfter < -2.0f && peakAfter > -3.6f, "peak guard limits calibration to about -3 dBFS true peak");
+    }
     { // Pegel je Kanal: links laut, rechts leise
         GainEngine e; e.prepare (fs); GainParams q;
         std::vector<float> L = sine (fs, 1000, 0.5, 48000), R = sine (fs, 1000, 0.05, 48000);

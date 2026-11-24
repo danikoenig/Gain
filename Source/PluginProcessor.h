@@ -45,6 +45,7 @@ public:
 
     // Meldung fuer die Oberflaeche ("NO SIGNAL" nach fehlgeschlagener Calibration)
     std::atomic<int> noSignalTicks { 0 };
+    std::atomic<int> peakLimitTicks { 0 };   // Calibration wurde durch die Peak-Sicherung begrenzt
 
 private:
     void handleAsyncUpdate() override;
@@ -57,7 +58,7 @@ private:
 
     // Animation: Gain-Knob dreht sich nach der Calibration zum neuen Wert
     std::atomic<float> pendingGainDb { 0.0f };
-    std::atomic<bool> pendingFailed { false };
+    std::atomic<bool> pendingFailed { false }, pendingLimited { false };
     float animFrom = 0.0f, animTo = 0.0f;
     int animStep = 0;
     static constexpr int animSteps = 24;

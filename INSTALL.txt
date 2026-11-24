@@ -120,9 +120,10 @@ HOW TO USE (SHORT)
   Set the level at the start of a channel so the plugins after it see the right input level.
 - METER (right): two bars (left / right) like in Ableton: each shows the RMS level (about 300 ms, darker) with the true peak (4x, lighter) above it, plus a thin line on the held peak. The scale is in dB relative to the target: 0 = triangle. The target is a plain RMS level in dBFS (default -18 dBFS RMS = a sine with -15 dBFS peak).
   Colours: blue = too quiet, green = target, yellow = too hot, red = from about -1 dBFS.
-- TRIANGLE (next to the meter): drag it to your target level (default -18 dBFS).
+- TRIANGLE (next to the meter): drag it to your target level (RMS, default -18 dBFS). A label shows the value while you drag. Right-click the meter for presets.
   The colours of the meter, the knob and the whole plugin follow it.
 - CALIBRATE: listens for 5 seconds and sets GAIN so the average level lands on the triangle.
+  Peak guard: the true peak is kept below -3 dBFS, so on very peaky material the average level can end up lower than the target (the button shows PEAK LIMIT).
   The knob turns to the new value. It measures after the filters. Quiet gaps are ignored.
   If you change a filter afterwards, press CALIBRATE again (it never turns by itself).
 - MONO: sums left and right to (L+R)/2, before the meter, calibration and gain.
@@ -286,9 +287,10 @@ KURZ ZUR BEDIENUNG
   Am Kanalanfang einstellen, damit die Plugins danach den richtigen Pegel bekommen.
 - METER (rechts): zwei Balken (links / rechts) wie bei Ableton: je Kanal der RMS-Pegel (ca. 300 ms, dunkler), darueber heller der True Peak (4x), dazu ein feiner Strich auf der gehaltenen Spitze. Die Skala zeigt dB relativ zum Ziel: 0 = Dreieck. Das Ziel ist ein normaler RMS-Pegel in dBFS (Standard -18 dBFS RMS = Sinus mit -15 dBFS Spitze).
   Farben: blau = zu leise, gruen = Ziel, gelb = zu laut, rot = ab ca. -1 dBFS.
-- DREIECK (neben dem Meter): auf den Zielpegel ziehen (Standard -18 dBFS).
+- DREIECK (neben dem Meter): auf den Zielpegel ziehen (RMS, Standard -18 dBFS). Beim Ziehen zeigt eine Anzeige den Wert. Rechtsklick auf das Meter oeffnet Richtwerte.
   Die Farben von Meter, Knopf und dem ganzen Plugin richten sich danach.
 - CALIBRATE: hoert 5 Sekunden zu und stellt GAIN so, dass der mittlere Pegel auf dem Dreieck landet.
+  Spitzen-Sicherung: der True Peak bleibt unter -3 dBFS, bei sehr spitzigem Material kann der mittlere Pegel deshalb unter dem Ziel landen (am Button steht PEAK LIMIT).
   Der Knopf dreht sich auf den neuen Wert. Gemessen wird nach den Filtern, leise Pausen zaehlen nicht.
   Aenderst du danach einen Filter, druecke CALIBRATE nochmal (es dreht nie von selbst).
 - MONO: summiert links und rechts zu (L+R)/2, vor Meter, Calibration und Gain.

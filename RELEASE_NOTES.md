@@ -1,5 +1,11 @@
 Free gain-staging utility for macOS (Apple Silicon), VST3, Audio Unit and CLAP. By Dani Koenig.
 
+### v1.3.0
+- **Peak guard for CALIBRATE:** the gain is limited so the true peak stays below -3 dBFS, even if the RMS target is then not reached (button shows PEAK LIMIT for a moment). Helps with very peaky material such as drum loops
+- **Target triangle:** while you drag it (or hover it) a label shows the exact value, e.g. "TARGET -18.0 dBFS RMS". Right-click the meter for presets (-18, -16, -14, -12, -9, -6 dBFS RMS)
+- Same font and header style as the other plugins: big GAIN with a small "by Dani Koenig . version" next to it
+- Knob: slimmer value arc, no longer cut off at the top
+
 ### v1.2.1
 - **Fix:** CALIBRATE now measures the true RMS (power). Before, it used a rectified average, which reads far too low on peaky material such as drum loops, so the gain ended up several dB too high (peaks above 0 dBFS). The meter bars show the same RMS
 - Wording: the meter shows RMS (about 300 ms) and the scale is in dB relative to the target

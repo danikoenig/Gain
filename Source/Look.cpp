@@ -7,7 +7,6 @@ using namespace juce;
 
 GainLookAndFeel::GainLookAndFeel()
 {
-    setDefaultSansSerifTypefaceName ("Helvetica Neue");
     setColour (Slider::textBoxTextColourId, text);
     setColour (Slider::textBoxOutlineColourId, Colours::transparentBlack);
     setColour (Slider::textBoxBackgroundColourId, Colours::transparentBlack);
@@ -41,7 +40,7 @@ void GainLookAndFeel::drawRotarySlider (Graphics& g, int x, int y, int w, int h,
     const bool hover = s.isMouseOverOrDragging();
 
     auto bounds = Rectangle<int> (x, y, w, h).toFloat();
-    const float size = jmin (bounds.getWidth(), bounds.getHeight()) - 16.0f;
+    const float size = jmin (bounds.getWidth(), bounds.getHeight()) - 44.0f;   // Rand fuer Leuchten, damit nichts abgeschnitten wird
     auto r = Rectangle<float> (size, size).withCentre (bounds.getCentre());
     const auto c = r.getCentre();
     const float radius = size * 0.5f;
@@ -54,7 +53,7 @@ void GainLookAndFeel::drawRotarySlider (Graphics& g, int x, int y, int w, int h,
     for (int i = 0; i < 5; ++i)
     {
         g.setColour (col.withAlpha ((0.04f + 0.5f * glow) * (0.22f - (float) i * 0.04f)));
-        g.drawEllipse (r.expanded ((float) i * size * 0.022f + 2.0f), lineW * 0.9f);
+        g.drawEllipse (r.expanded ((float) i * size * 0.014f + 2.0f), lineW * 0.8f);
     }
 
     // Track
@@ -68,10 +67,10 @@ void GainLookAndFeel::drawRotarySlider (Graphics& g, int x, int y, int w, int h,
     {
         Path val;
         val.addCentredArc (c.x, c.y, arcR, arcR, 0.0f, jmin (zeroAngle, angle), jmax (zeroAngle, angle), true);
-        g.setColour (col.withAlpha (0.18f + 0.3f * glow));
-        g.strokePath (val, PathStrokeType (lineW * 3.2f, PathStrokeType::curved, PathStrokeType::rounded));
-        g.setColour (col.withAlpha (0.25f + 0.3f * glow));
-        g.strokePath (val, PathStrokeType (lineW * 2.0f, PathStrokeType::curved, PathStrokeType::rounded));
+        g.setColour (col.withAlpha (0.10f + 0.20f * glow));
+        g.strokePath (val, PathStrokeType (lineW * 2.2f, PathStrokeType::curved, PathStrokeType::rounded));
+        g.setColour (col.withAlpha (0.20f + 0.25f * glow));
+        g.strokePath (val, PathStrokeType (lineW * 1.5f, PathStrokeType::curved, PathStrokeType::rounded));
         g.setColour (col);
         g.strokePath (val, PathStrokeType (lineW, PathStrokeType::curved, PathStrokeType::rounded));
     }
@@ -249,6 +248,57 @@ void GainMeter::drag (const MouseEvent& e, int phase)
     onTargetDrag (phase, jlimit (-36.0f, -6.0f, db));
 }
 
-void GainMeter::mouseDown (const MouseEvent& e) { drag (e, 0); }
-void GainMeter::mouseDrag (const MouseEvent& e) { drag (e, 1); }
-void GainMeter::mouseUp (const MouseEvent& e)   { drag (e, 2); }
+void GainMeter::showPresetMenu()
+{
+    // Richtwerte (RMS in dBFS) fuer das Zielpegel-Dreieck
+    struct Preset { float db; const char* text; };
+    static const Preset presets[] = {
+        { -18.0f, "-18 dBFS RMS   Standard (0 VU)" },
+        { -16.0f, "-16 dBFS RMS" },
+        { -14.0f, "-14 dBFS RMS   Studer (0 VU: -18 bis -14)" },
+        { -12.0f, "-12 dBFS RMS   FET-Kompressoren (-18 bis -12)" },
+        { -9.0f,  "-9 dBFS RMS" },
+        { -6.0f,  "-6 dBFS RMS" } };
+
+    PopupMenu m;
+    m.addSectionHeader ("Zielpegel (RMS)");
+    for (int i = 0; i < 6; ++i)
+        m.addItem (i + 1, presets[i].text, true, std::abs (presets[i].db - targetDb) < 0.01f);
+
+    m.showMenuAsync (PopupMenu::Options().withTargetComponent (this).withMinimumWidth (260),
+                     [safe = Component::SafePointer<GainMeter> (this)] (int result)
+    {
+        if (safe == nullptr || result <= 0 || ! safe->onTargetDrag) return;
+        const float db = presets[result - 1].db;
+        safe->onTargetDrag (0, db);
+        safe->onTargetDrag (2, db);
+    });
+}
+
+void GainMeter::mouseDown (const MouseEvent& e)
+{
+    if (e.mods.isPopupMenu()) { showPresetMenu(); return; }
+    dragging = true;
+    drag (e, 0);
+}
+
+void GainMeter::mouseDrag (const MouseEvent& e) { if (dragging) drag (e, 1); }
+
+void GainMeter::mouseUp (const MouseEvent& e)
+{
+    if (! dragging) return;
+    dragging = false;
+    drag (e, 2);
+}
+
+void GainMeter::mouseMove (const MouseEvent& e)
+{
+    const bool nearTriangle = e.position.x < 22.0f * (float) getWidth() / 76.0f
+                              && std::abs (e.position.y - yForDb (targetDb)) < 12.0f;
+    if (nearTriangle != hoverTarget) { hoverTarget = nearTriangle; repaint(); }
+}
+
+void GainMeter::mouseExit (const MouseEvent&)
+{
+    if (hoverTarget) { hoverTarget = false; repaint(); }
+}

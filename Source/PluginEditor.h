@@ -19,7 +19,7 @@ private:
     juce::Rectangle<int> R (float x, float y, float w, float h) const;
     void cycleChoice (const char* id);
 
-    static constexpr float designW = 360.0f, designH = 470.0f;
+    static constexpr float designW = 360.0f, designH = 452.0f;
 
     GainProcessor& processor;
     GainLookAndFeel lnf;

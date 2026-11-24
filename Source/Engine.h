@@ -13,6 +13,7 @@ namespace GainDSP
     constexpr float meterMaxDb  = 3.0f;     // oberes Ende (True Peak kann ueber 0 liegen)
     constexpr float calSeconds  = 5.0f;
     constexpr float rmsOffsetDb = 0.0f;     // Anzeige = normaler RMS in dBFS (Sinus mit -15 dBFS Spitze = -18 dBFS RMS)
+    constexpr float calPeakCeilingDb = -3.0f;   // Sicherung: Calibration bringt die True Peaks nie ueber diesen Wert
     constexpr float calGateDb   = -55.0f;   // Bloecke leiser als das zaehlen bei der Messung nicht
     constexpr float lowCutHz[3]  = { 0.0f, 25.0f, 100.0f };
     constexpr float highCutHz[3] = { 0.0f, 18000.0f, 10000.0f };
@@ -52,6 +53,7 @@ public:
         return true;
     }
     bool popCalibrationFailed() { return calFailed.exchange (false); }
+    bool popCalibrationLimited() { return calLimited.exchange (false); }   // Sicherung hat den Gain begrenzt
 
     // Anzeigen (dBFS, nach Filter und Gain)
     std::atomic<float> rmsDb { -100.0f }, peakDb { -100.0f };            // beide Kanaele zusammen
@@ -79,13 +81,15 @@ private:
     {
         double dcX1 = 0, dcY1 = 0;
         Biquad lc25, lc100, hc18, hc10;
-        float hist[16] = {};
+        float hist[16] = {};      // True Peak nach dem Gain (Anzeige)
         int idx = 0;
+        float histPre[16] = {};   // True Peak vor dem Gain (Calibration-Sicherung)
+        int idxPre = 0;
         double ms = 0;   // gleitender Mittelwert der Leistung (x^2) -> echter RMS
     };
 
     // 4x True-Peak: gefensterte Sinc-Interpolation, 3 Zwischenwerte pro Sample
-    float truePeakSample (Channel& c, float x);
+    float truePeakSample (float* hist, int& idx, float x);
 
     double fs = 48000.0;
     double dcR = 0.999;
@@ -102,8 +106,9 @@ private:
     double peakHold[maxChannels] = {};
 
     // Calibration
-    std::atomic<bool> calRequest { false }, calCancel { false }, calActive { false }, calDone { false }, calFailed { false };
+    std::atomic<bool> calRequest { false }, calCancel { false }, calActive { false }, calDone { false }, calFailed { false }, calLimited { false };
     std::atomic<float> calProgress { 0.0f }, calResultDb { 0.0f };
     long calSamplesLeft = 0, calBlockLen = 1, calBlockPos = 0, calValid = 0;
     double calBlockSum = 0, calTotalPower = 0;
+    float calPeakPre = 0.0f;   // hoechster True Peak (linear) vor dem Gain waehrend der Messung
 };

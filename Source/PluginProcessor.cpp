@@ -69,6 +69,7 @@ void GainProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer&)
     {
         pendingGainDb = db;
         pendingFailed = false;
+        pendingLimited = engine.popCalibrationLimited();
         triggerAsyncUpdate();
     }
     else if (engine.popCalibrationFailed())
@@ -85,6 +86,8 @@ void GainProcessor::handleAsyncUpdate()
         noSignalTicks = 60;
         return;
     }
+
+    if (pendingLimited.exchange (false)) peakLimitTicks = 75;   // ca. 2.5 s Hinweis am Button
 
     // Calibration fertig: Gain-Regler faehrt animiert auf den gemessenen Wert
     if (auto* par = apvts.getParameter (ParamID::gain))

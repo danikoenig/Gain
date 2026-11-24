@@ -90,7 +90,7 @@ void GainEditor::resized()
 {
     scale = (float) getWidth() / designW;
 
-    gainKnob.setBounds (R (10, 84, 248, 280));
+    gainKnob.setBounds (R (0, 74, 262, 300));
     gainKnob.setTextBoxStyle (Slider::TextBoxBelow, false, roundToInt (120 * scale), roundToInt (24 * scale));
     meter.setBounds (R (268, 84, 76, 276));
 
@@ -147,7 +147,9 @@ void GainEditor::timerCallback()
     calBtn.getProperties().set ("calibrating", cal);
     calBtn.getProperties().set ("progress", (double) e.getCalProgress());
     calBtn.getProperties().set ("tint", tint.toString());
-    calBtn.setButtonText (cal ? "LISTENING" : ticks > 0 ? "NO SIGNAL" : "CALIBRATE");
+    int limTicks = processor.peakLimitTicks.load();
+    if (limTicks > 0) processor.peakLimitTicks = --limTicks;
+    calBtn.setButtonText (cal ? "LISTENING" : ticks > 0 ? "NO SIGNAL" : limTicks > 0 ? "PEAK LIMIT" : "CALIBRATE");
     calBtn.repaint();
 
     repaint (R (0, 84, designW, 300));
@@ -166,37 +168,60 @@ void GainEditor::paint (Graphics& g)
                                        tint.withAlpha (0.0f), c.x + rad, c.y, true));
     g.fillAll();
 
-    // Titel: gross, mittig
-    g.setColour (text);
-    g.setFont (gainFont (60.0f * scale, true));
+    // Kopfzeile wie bei den anderen Plugins: Titel gross, klein daneben "by Dani Koenig . v1.x" auf der Grundlinie
+    const String byText = String::fromUTF8 ("by Dani Koenig  \xc2\xb7  v") + JucePlugin_VersionString;
     {
         const String title = "GAIN";
-        const float spacing = 12.0f * scale;
-        float wTot = 0.0f;
+        const float titleSize = 60.0f * scale, spacing = 12.0f * scale, smallSize = 11.0f * scale, gapW = 14.0f * scale;
+        Font big (gainFont (titleSize, true)), small (gainFont (smallSize));
+        float titleW = 0.0f;
         for (int i = 0; i < title.length(); ++i)
-            wTot += g.getCurrentFont().getStringWidthFloat (String::charToString (title[i])) + spacing;
-        wTot -= spacing;
-        float x = ((float) getWidth() - wTot) * 0.5f;
+            titleW += big.getStringWidthFloat (String::charToString (title[i])) + spacing;
+        titleW -= spacing;
+        const float smallW = small.getStringWidthFloat (byText);
+        float x = ((float) getWidth() - (titleW + gapW + smallW)) * 0.5f;
+
+        g.setColour (text);
+        g.setFont (big);
         for (int i = 0; i < title.length(); ++i)
         {
-            const auto s = String::charToString (title[i]);
-            const float gw = g.getCurrentFont().getStringWidthFloat (s);
-            g.drawText (s, Rectangle<float> (x, 8.0f * scale, gw + 4.0f, 68.0f * scale), Justification::centredLeft);
+            const auto ch = String::charToString (title[i]);
+            const float gw = big.getStringWidthFloat (ch);
+            g.drawText (ch, Rectangle<float> (x, 8.0f * scale, gw + 4.0f, 62.0f * scale), Justification::centredLeft);
             x += gw + spacing;
         }
+        x = x - spacing + gapW;
+        g.setColour (textDim);
+        g.setFont (small);
+        g.drawText (byText, Rectangle<float> (x, 44.0f * scale, smallW + 6.0f, 16.0f * scale), Justification::centredLeft);
     }
 
     // Trennlinie
     g.setColour (cardBorder);
     g.drawHorizontalLine (roundToInt (380.0f * scale), 16.0f * scale, (designW - 16.0f) * scale);
 
-    g.setColour (textDim);
-    g.setFont (gainFont (9.5f * scale, true));
-    g.drawText (String::fromUTF8 ("by Dani Koenig  \xc2\xb7  v") + JucePlugin_VersionString, R (0, 448, designW, 12).toFloat(), Justification::centred);
 }
 
 void GainEditor::paintOverChildren (Graphics& g)
 {
+    if (meter.isTargetActive())
+    {
+        const float db = targetShown;
+        const auto mb = meter.getBounds().toFloat();
+        const float cy = mb.getY() + meter.getTargetY();
+        const String line1 = "TARGET  " + String (db, 1) + " dBFS RMS";
+        Font f1 (gainFont (12.0f * scale, true));
+        const float w = f1.getStringWidthFloat (line1) + 20.0f * scale, h = 24.0f * scale;
+        auto box = Rectangle<float> (mb.getX() - 18.0f * scale - w, cy - h * 0.5f, w, h);
+        g.setColour (inset.withAlpha (0.96f));
+        g.fillRoundedRectangle (box, 6.0f * scale);
+        g.setColour (tint.withAlpha (0.9f));
+        g.drawRoundedRectangle (box, 6.0f * scale, 1.2f);
+        g.setColour (text);
+        g.setFont (f1);
+        g.drawText (line1, box, Justification::centred);
+    }
+
     auto r = getLocalBounds().toFloat().reduced (1.0f);
     g.setColour (tint.withAlpha (0.08f + 0.6f * glow * glow));
     g.drawRoundedRectangle (r, 6.0f * scale, 1.5f);

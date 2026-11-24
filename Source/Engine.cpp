@@ -64,7 +64,8 @@ void GainEngine::reset()
 {
     for (auto& c : ch)
     {
-        c.dcX1 = c.dcY1 = 0; c.ms = 0; c.idx = 0;
+        c.dcX1 = c.dcY1 = 0; c.ms = 0; c.idx = 0; c.idxPre = 0;
+        std::fill (std::begin (c.histPre), std::end (c.histPre), 0.0f);
         c.lc25.reset(); c.lc100.reset(); c.hc18.reset(); c.hc10.reset();
         std::fill (std::begin (c.hist), std::end (c.hist), 0.0f);
     }
@@ -72,16 +73,16 @@ void GainEngine::reset()
     calActive = false; calProgress = 0.0f;
 }
 
-float GainEngine::truePeakSample (Channel& c, float x)
+float GainEngine::truePeakSample (float* hist, int& idx, float x)
 {
-    c.idx = (c.idx + 1) & 15;
-    c.hist[c.idx] = x;
-    float pk = std::abs (c.hist[(c.idx - 6) & 15]);
+    idx = (idx + 1) & 15;
+    hist[idx] = x;
+    float pk = std::abs (hist[(idx - 6) & 15]);
     for (int ph = 0; ph < 3; ++ph)
     {
         float acc = 0.0f;
         for (int j = 0; j < 12; ++j)
-            acc += c.hist[(c.idx - j) & 15] * tpCoef[ph][j];
+            acc += hist[(idx - j) & 15] * tpCoef[ph][j];
         pk = std::max (pk, std::abs (acc));
     }
     return pk;
@@ -99,7 +100,8 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
         calActive = true;
         calSamplesLeft = (long) (calSeconds * fs);
         calBlockLen = (long) (0.1 * fs);
-        calBlockPos = 0; calBlockSum = 0; calTotalPower = 0; calValid = 0;
+        calBlockPos = 0; calBlockSum = 0; calTotalPower = 0; calValid = 0; calPeakPre = 0.0f;
+        for (auto& c : ch) { std::fill (std::begin (c.histPre), std::end (c.histPre), 0.0f); c.idxPre = 0; }
         calProgress = 0.0f;
     }
     const bool cal = calActive.load();
@@ -160,7 +162,8 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
             data[c][i] = o;
 
             s.ms += ((double) o * o - s.ms) * kRms;
-            blockPeak[c] = std::max (blockPeak[c], truePeakSample (s, o));
+            blockPeak[c] = std::max (blockPeak[c], truePeakSample (s.hist, s.idx, o));
+            if (cal) calPeakPre = std::max (calPeakPre, truePeakSample (s.histPre, s.idxPre, z));
         }
 
         if (cal)
@@ -205,7 +208,11 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
             if (calValid >= 5)    // mindestens 0.5 s Signal
             {
                 const float measured = 10.0f * (float) std::log10 (calTotalPower / (double) calValid + 1.0e-20) + rmsOffsetDb;
-                calResultDb = std::max (-maxGainDb, std::min (maxGainDb, p.targetDb - measured));
+                float result = p.targetDb - measured;
+                // Sicherung: auch bei spitzigem Material bleiben die True Peaks unter dem Limit
+                const float peakLimitGain = calPeakCeilingDb - GainDSP::toDb (calPeakPre);
+                if (peakLimitGain < result) { result = peakLimitGain; calLimited = true; }
+                calResultDb = std::max (-maxGainDb, std::min (maxGainDb, result));
                 calDone = true;
             }
             else

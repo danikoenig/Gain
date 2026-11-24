@@ -3,10 +3,10 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Colours.h"
 
-// Schrift: Helvetica (Schweizer Klassiker)
+// Schrift: wie bei den anderen Plugins die Standardschrift von JUCE (kein Schriftname gesetzt)
 inline juce::FontOptions gainFont (float size, bool bold = false)
 {
-    return juce::FontOptions ("Helvetica Neue", size, bold ? juce::Font::bold : juce::Font::plain);
+    return juce::FontOptions (size, bold ? juce::Font::bold : juce::Font::plain);
 }
 
 // Look & Feel im Dani-Koenig-Design (wie Knack, One Shooter ...), Hochformat
@@ -38,10 +38,16 @@ public:
     // phase: 0 = Start, 1 = Ziehen, 2 = Ende
     std::function<void (int phase, float db)> onTargetDrag;
 
+    // true, solange das Dreieck gezogen wird oder die Maus darueber steht (fuer die Wert-Anzeige)
+    bool isTargetActive() const { return dragging || hoverTarget; }
+    float getTargetY() const { return yForDb (targetDb); }
+
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override;
     void mouseDrag (const juce::MouseEvent&) override;
     void mouseUp (const juce::MouseEvent&) override;
+    void mouseMove (const juce::MouseEvent&) override;
+    void mouseExit (const juce::MouseEvent&) override;
 
 private:
     float yForDb (float db) const;
@@ -49,5 +55,8 @@ private:
     juce::Rectangle<float> barArea() const;
     void drag (const juce::MouseEvent&, int phase);
 
+    void showPresetMenu();
+
     float rmsDb[2] = { -100.0f, -100.0f }, peakDb[2] = { -100.0f, -100.0f }, targetDb = -18.0f;
+    bool dragging = false, hoverTarget = false;
 };
