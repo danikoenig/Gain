@@ -1,4 +1,5 @@
 #pragma once
+#include <limits>
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "Engine.h"
@@ -11,6 +12,7 @@ namespace ParamID
     inline constexpr const char* target  = "target";
     inline constexpr const char* mono    = "mono";
     inline constexpr const char* meterMode = "metermode";
+    inline constexpr const char* theme   = "theme";
 }
 
 class GainProcessor : public juce::AudioProcessor, private juce::AsyncUpdater, private juce::Timer
@@ -46,6 +48,7 @@ public:
 
     // Meldung fuer die Oberflaeche ("NO SIGNAL" nach fehlgeschlagener Calibration)
     std::atomic<int> noSignalTicks { 0 };
+    std::atomic<float> sweetGainDb { std::numeric_limits<float>::quiet_NaN() };   // Gain-Wert der letzten Calibration (Sweet Spot), NaN = keiner
     std::atomic<int> peakLimitTicks { 0 };   // Calibration wurde durch die Peak-Sicherung begrenzt
 
 private:

@@ -14,11 +14,16 @@ class GainLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
     GainLookAndFeel();
+    void setTheme (const GainColours::Theme* t);
+    const GainColours::Theme& getTheme() const { return *theme; }
     void drawRotarySlider (juce::Graphics&, int x, int y, int w, int h, float pos,
                            float startAngle, float endAngle, juce::Slider&) override;
     void drawButtonBackground (juce::Graphics&, juce::Button&, const juce::Colour&, bool, bool) override;
     void drawButtonText (juce::Graphics&, juce::TextButton&, bool, bool) override;
     juce::Label* createSliderTextBox (juce::Slider&) override;
+
+private:
+    const GainColours::Theme* theme = &GainColours::themeFor (0);
 };
 
 // Meter: zwei Balken (links / rechts). Anzeige per Rechtsklick: RMS (Standard, trag), True Peak oder beides
@@ -32,6 +37,7 @@ public:
         for (int i = 0; i < 2; ++i) { rmsDb[i] = rms2[i]; peakDb[i] = peak2[i]; }
         repaint();
     }
+    void setTheme (const GainColours::Theme* t) { th = t; repaint(); }
     void setMode (int m) { if (m != mode) { mode = m; repaint(); } }   // 0 RMS, 1 True Peak, 2 RMS + Peak
     std::function<void (int mode)> onModeChange;
     void setTarget (float t) { if (std::abs (t - targetDb) > 0.001f) { targetDb = t; repaint(); } }
@@ -61,6 +67,7 @@ private:
     void showModeMenu();
     bool nearTriangle (const juce::MouseEvent&) const;
     int mode = 0;
+    const GainColours::Theme* th = &GainColours::themeFor (0);
 
     float rmsDb[2] = { -100.0f, -100.0f }, peakDb[2] = { -100.0f, -100.0f }, targetDb = -18.0f;
     bool dragging = false, hoverTarget = false;

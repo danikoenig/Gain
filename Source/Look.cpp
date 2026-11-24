@@ -7,6 +7,13 @@ using namespace juce;
 
 GainLookAndFeel::GainLookAndFeel()
 {
+    setTheme (theme);
+}
+
+void GainLookAndFeel::setTheme (const GainColours::Theme* t)
+{
+    theme = t;
+    GAIN_LOCALS (*theme);
     setColour (Slider::textBoxTextColourId, text);
     setColour (Slider::textBoxOutlineColourId, Colours::transparentBlack);
     setColour (Slider::textBoxBackgroundColourId, Colours::transparentBlack);
@@ -20,6 +27,7 @@ GainLookAndFeel::GainLookAndFeel()
 
 Label* GainLookAndFeel::createSliderTextBox (Slider& s)
 {
+    GAIN_LOCALS (*theme);
     auto* l = LookAndFeel_V4::createSliderTextBox (s);
     l->setFont (gainFont (15.0f, true));
     l->setJustificationType (Justification::centred);
@@ -35,6 +43,7 @@ Label* GainLookAndFeel::createSliderTextBox (Slider& s)
 void GainLookAndFeel::drawRotarySlider (Graphics& g, int x, int y, int w, int h, float pos,
                                         float startAngle, float endAngle, Slider& s)
 {
+    GAIN_LOCALS (*theme);
     const float glow = (float) (double) s.getProperties().getWithDefault ("glow", 0.2);
     const Colour col = Colour::fromString (s.getProperties().getWithDefault ("tint", blue.toString()).toString());
     const bool hover = s.isMouseOverOrDragging();
@@ -75,6 +84,33 @@ void GainLookAndFeel::drawRotarySlider (Graphics& g, int x, int y, int w, int h,
         g.strokePath (val, PathStrokeType (lineW, PathStrokeType::curved, PathStrokeType::rounded));
     }
 
+    // Sweet Spot der letzten Calibration: kleine Marke auf dem Ring
+    {
+        const float sweet = (float) (double) s.getProperties().getWithDefault ("sweet", -1000.0);
+        if (sweet > -GainDSP::maxGainDb - 0.01f && sweet < GainDSP::maxGainDb + 0.01f)
+        {
+            const float a = startAngle + (sweet + GainDSP::maxGainDb) / (2.0f * GainDSP::maxGainDb) * (endAngle - startAngle);
+            g.setColour (green.withAlpha (0.9f));
+            g.drawLine (c.x + std::sin (a) * (radius + 3.0f), c.y - std::cos (a) * (radius + 3.0f),
+                        c.x + std::sin (a) * (radius - lineW - 1.0f), c.y - std::cos (a) * (radius - lineW - 1.0f), 2.2f);
+        }
+    }
+
+    // Industrial: feine Skala wie bei einem Zifferblatt
+    if (theme->ticks)
+    {
+        const int n = 40;
+        for (int i = 0; i <= n; ++i)
+        {
+            const float a = startAngle + (float) i / (float) n * (endAngle - startAngle);
+            const bool major = (i % 5 == 0), centre = (i == n / 2);
+            const float r0 = radius + 5.0f, r1 = r0 + (centre ? 10.0f : major ? 7.0f : 3.5f);
+            g.setColour ((centre ? text : textDim).withAlpha (major ? 0.9f : 0.55f));
+            g.drawLine (c.x + std::sin (a) * r0, c.y - std::cos (a) * r0,
+                        c.x + std::sin (a) * r1, c.y - std::cos (a) * r1, major ? 1.6f : 1.0f);
+        }
+    }
+
     // 0-dB-Strich oben
     g.setColour (text.withAlpha (0.9f));
     g.drawLine (c.x, r.getY() - 6.0f, c.x, r.getY() + lineW + 2.0f, 2.0f);
@@ -88,8 +124,8 @@ void GainLookAndFeel::drawRotarySlider (Graphics& g, int x, int y, int w, int h,
     g.setGradientFill (ColourGradient (col.withAlpha (0.0f), c.x, c.y,
                                        col.withAlpha (jmin (0.8f, 0.03f + 0.55f * glow)), c.x + bodyR, c.y, true));
     g.fillEllipse (body);
-    g.setColour (Colours::white.withAlpha (0.07f));
-    g.drawEllipse (body.reduced (0.5f), 1.0f);
+    g.setColour (text.withAlpha (theme->ticks ? 0.30f : 0.07f));
+    g.drawEllipse (body.reduced (0.5f), theme->ticks ? 1.6f : 1.0f);
 
     // Zeiger
     const float px = c.x + std::sin (angle) * bodyR * 0.80f, py = c.y - std::cos (angle) * bodyR * 0.80f;
@@ -102,6 +138,8 @@ void GainLookAndFeel::drawRotarySlider (Graphics& g, int x, int y, int w, int h,
 
 void GainLookAndFeel::drawButtonBackground (Graphics& g, Button& b, const Colour&, bool highlighted, bool down)
 {
+    GAIN_LOCALS (*theme);
+    const float rad = theme->radius;
     auto r = b.getLocalBounds().toFloat().reduced (0.5f);
     const bool calibrating = (bool) b.getProperties().getWithDefault ("calibrating", false);
     const bool active = (bool) b.getProperties().getWithDefault ("active", false);
@@ -109,23 +147,24 @@ void GainLookAndFeel::drawButtonBackground (Graphics& g, Button& b, const Colour
     const Colour col = Colour::fromString (b.getProperties().getWithDefault ("tint", blue.toString()).toString());
 
     g.setColour (down ? cardBorder.brighter (0.2f) : highlighted ? cardBorder : inset);
-    g.fillRoundedRectangle (r, 6.0f);
+    g.fillRoundedRectangle (r, rad);
     if (active)
     {
         g.setColour (col.withAlpha (0.14f));
-        g.fillRoundedRectangle (r, 6.0f);
+        g.fillRoundedRectangle (r, rad);
     }
     if (calibrating)
     {
         g.setColour (col.withAlpha (0.35f));
-        g.fillRoundedRectangle (r.withWidth (jmax (12.0f, r.getWidth() * progress)), 6.0f);
+        g.fillRoundedRectangle (r.withWidth (jmax (12.0f, r.getWidth() * progress)), rad);
     }
     g.setColour (calibrating || active ? col : cardBorder.brighter (0.15f));
-    g.drawRoundedRectangle (r, 6.0f, 1.2f);
+    g.drawRoundedRectangle (r, rad, 1.2f);
 }
 
 void GainLookAndFeel::drawButtonText (Graphics& g, TextButton& b, bool, bool)
 {
+    GAIN_LOCALS (*theme);
     auto r = b.getLocalBounds().toFloat();
     const bool active = (bool) b.getProperties().getWithDefault ("active", false);
     const float s = (float) b.getHeight() / 44.0f;
@@ -171,6 +210,7 @@ float GainMeter::dbForY (float y) const
 
 void GainMeter::paint (Graphics& g)
 {
+    GAIN_LOCALS (*th);
     const float s = (float) getWidth() / 76.0f;
     auto a = barArea();
     const float barW = 16.0f * s, gap = 4.0f * s;
@@ -194,15 +234,20 @@ void GainMeter::paint (Graphics& g)
         {
             const float yc = y + step * 0.5f;
             const float db = dbForY (yc);
-            const auto base = levelColour (db, targetDb);
-            if (mode != 1 && hasVu && yc >= yVu)        g.setColour (base.darker (mode == 0 ? 0.15f : 0.45f));   // RMS (allein: kraeftiger)
-            else if (mode != 0 && hasPk && yc >= yPk)   g.setColour (base.brighter (mode == 1 ? 0.2f : 0.5f).withAlpha (0.95f)); // True Peak: heller
-            else                           g.setColour (base.withAlpha (0.13f));
+            const auto base = levelColour (*th, db, targetDb);
+            Colour col;
+            if (mode != 1 && hasVu && yc >= yVu)        col = base.darker (mode == 0 ? 0.15f : 0.45f);   // RMS (allein: kraeftiger)
+            else if (mode != 0 && hasPk && yc >= yPk)   col = base.brighter (mode == 1 ? 0.2f : 0.5f).withAlpha (0.95f); // True Peak: heller
+            else                                        col = base.withAlpha (0.13f);
+            // Farbenblind-Theme: Warnzone zusaetzlich als Streifenmuster
+            if (th->patterns && db > -4.0f && ((int) std::round ((bar.getBottom() - y) / step) % 2) == 0)
+                col = col.withMultipliedAlpha (0.4f);
+            g.setColour (col);
             g.fillRect (bar.getX(), y, bar.getWidth(), step - 0.6f);
         }
         if (hasPk)
         {
-            g.setColour (Colours::white.withAlpha (mode == 0 ? 0.6f : 0.9f));
+            g.setColour (text.withAlpha (mode == 0 ? 0.6f : 0.9f));
             g.fillRect (bar.getX(), yPk - 0.75f * s, bar.getWidth(), 1.5f * s);
         }
     };
@@ -221,7 +266,7 @@ void GainMeter::paint (Graphics& g)
         const float db = absolute ? vu : targetDb + vu;
         if (db > GainDSP::meterMaxDb || db < GainDSP::meterMinDb) continue;
         const float y = yForDb (db);
-        g.setColour (Colours::white.withAlpha (0.18f));
+        g.setColour (text.withAlpha (0.18f));
         g.drawHorizontalLine ((int) y, barsRight + 1.0f * s, barsRight + 4.0f * s);
         g.setColour (textDim);
         g.drawText ((vu > 0.0f ? "+" : "") + String ((int) vu), Rectangle<float> (barsRight + 5.0f * s, y - 6.0f * s, 22.0f * s, 12.0f * s),
@@ -229,7 +274,7 @@ void GainMeter::paint (Graphics& g)
     }
 
     // 0 dBFS: feine Linie ueber beide Balken
-    g.setColour (Colours::white.withAlpha (0.55f));
+    g.setColour (text.withAlpha (0.55f));
     g.drawHorizontalLine ((int) yForDb (0.0f), barsLeft - 1.0f * s, barsRight + 1.0f * s);
 
     // Zielpegel: Linie ueber den RMS-Balken, Dreieck links (zum Ziehen)
@@ -239,7 +284,7 @@ void GainMeter::paint (Graphics& g)
     Path tri;
     const float tx = barsLeft - 4.0f * s;
     tri.addTriangle (tx - 11.0f * s, ty - 6.0f * s, tx - 11.0f * s, ty + 6.0f * s, tx, ty);
-    g.setColour (levelColour (targetDb, targetDb).withAlpha (0.35f));
+    g.setColour (levelColour (*th, targetDb, targetDb).withAlpha (0.35f));
     g.fillPath (tri);
     g.setColour (text);
     g.strokePath (tri, PathStrokeType (1.6f));

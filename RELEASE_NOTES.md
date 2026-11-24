@@ -1,5 +1,9 @@
 Free gain-staging utility for macOS (Apple Silicon), VST3, Audio Unit and CLAP. By Dani Koenig.
 
+### v1.5.0
+- **Themes:** right-click the header (the GAIN title) to choose the look: JUCE (the original, now with the orange frame like the other plugins), Ableton (light grey, flat), Bitwig (dark grey, flat), Industrial (matte black and steel, sharp corners, dial scale around the knob), Colour-Blind (blue / white / orange / violet instead of red / green, with a striped pattern in the warning zone). The choice is saved with the project
+- **Sweet spot:** after CALIBRATE, the exact gain it found is marked on the knob ring (small green tick). When you turn the knob across that value, the whole plugin flashes green briefly and stays a little greener while you sit on it, so you can easily get back without calibrating again. The value is saved with the project
+
 ### v1.4.0
 - **Meter display:** right-click the bars to choose RMS (default), True Peak or RMS + True Peak. RMS alone is calmer and matches the target triangle; the white hold line still shows the true peak. The choice is saved with the project. Presets for the target stay on a right-click on the triangle
 - RMS display is slower (time constant 300 ms), so it no longer jumps with every kick

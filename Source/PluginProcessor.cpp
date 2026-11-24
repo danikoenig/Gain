@@ -24,6 +24,9 @@ AudioProcessorValueTreeState::ParameterLayout GainProcessor::createLayout()
     // Anzeige: 0 = RMS (Standard), 1 = True Peak, 2 = RMS + Peak
     p.push_back (std::make_unique<AudioParameterChoice> (ParameterID { ParamID::meterMode, 1 }, "Meter Mode",
                     StringArray { "RMS", "True Peak", "RMS + Peak" }, 0));
+    // Aussehen: 0 JUCE (Original), 1 Ableton, 2 Bitwig, 3 Industrial, 4 Colour-Blind
+    p.push_back (std::make_unique<AudioParameterChoice> (ParameterID { ParamID::theme, 1 }, "Theme",
+                    StringArray { "JUCE", "Ableton", "Bitwig", "Industrial", "Colour-Blind" }, 0));
 
     return { p.begin(), p.end() };
 }
@@ -97,6 +100,7 @@ void GainProcessor::handleAsyncUpdate()
     {
         animFrom = par->convertFrom0to1 (par->getValue());
         animTo = pendingGainDb.load();
+        sweetGainDb = std::round (animTo * 10.0f) / 10.0f;   // so wie der Regler den Wert speichert (0.1-Schritte)
         animStep = 0;
         par->beginChangeGesture();
         startTimerHz (60);
@@ -123,6 +127,7 @@ AudioProcessorEditor* GainProcessor::createEditor() { return new GainEditor (*th
 
 void GainProcessor::getStateInformation (MemoryBlock& dest)
 {
+    apvts.state.setProperty ("sweetGain", sweetGainDb.load(), nullptr);
     if (auto xml = apvts.copyState().createXml())
         copyXmlToBinary (*xml, dest);
 }
@@ -131,7 +136,11 @@ void GainProcessor::setStateInformation (const void* data, int size)
 {
     if (auto xml = getXmlFromBinary (data, size))
         if (xml->hasTagName (apvts.state.getType()))
+        {
             apvts.replaceState (ValueTree::fromXml (*xml));
+            if (apvts.state.hasProperty ("sweetGain"))
+                sweetGainDb = (float) (double) apvts.state.getProperty ("sweetGain");
+        }
 }
 
 AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new GainProcessor(); }

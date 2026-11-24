@@ -5,8 +5,13 @@ using namespace GainColours;
 
 GainEditor::GainEditor (GainProcessor& p) : AudioProcessorEditor (&p), processor (p)
 {
-    setLookAndFeel (&lnf);
     auto& apvts = processor.apvts;
+    themeIndex = roundToInt (apvts.getRawParameterValue (ParamID::theme)->load());
+    th = &themeFor (themeIndex);
+    tint = th->blue;
+    lnf.setTheme (th);
+    meter.setTheme (th);
+    setLookAndFeel (&lnf);
 
     gainKnob.setSliderStyle (Slider::RotaryHorizontalVerticalDrag);
     gainKnob.setTextBoxStyle (Slider::TextBoxBelow, false, 120, 22);
@@ -80,6 +85,46 @@ GainEditor::~GainEditor()
     setLookAndFeel (nullptr);
 }
 
+void GainEditor::applyTheme (int index)
+{
+    themeIndex = index;
+    th = &themeFor (index);
+    lnf.setTheme (th);
+    meter.setTheme (th);
+    tint = th->blue;
+    slowDb = -200.0f;
+    sendLookAndFeelChange();   // Textfeld des Knobs neu aufbauen
+    resized();
+    repaint();
+}
+
+void GainEditor::showThemeMenu()
+{
+    PopupMenu m;
+    m.addSectionHeader ("Theme");
+    const auto names = themeNames();
+    for (int i = 0; i < names.size(); ++i)
+        m.addItem (i + 1, names[i], true, i == themeIndex);
+
+    m.showMenuAsync (PopupMenu::Options().withTargetComponent (this).withMinimumWidth (200),
+                     [safe = Component::SafePointer<GainEditor> (this)] (int result)
+    {
+        if (safe == nullptr || result <= 0) return;
+        if (auto* par = safe->processor.apvts.getParameter (ParamID::theme))
+        {
+            par->beginChangeGesture();
+            par->setValueNotifyingHost (par->convertTo0to1 ((float) (result - 1)));
+            par->endChangeGesture();
+        }
+    });
+}
+
+void GainEditor::mouseDown (const MouseEvent& e)
+{
+    // Rechtsklick auf die Kopfzeile: Theme waehlen
+    if (e.mods.isPopupMenu() && e.position.y < 72.0f * scale) showThemeMenu();
+}
+
 void GainEditor::cycleChoice (const char* id)
 {
     if (auto* par = processor.apvts.getParameter (id))
@@ -113,6 +158,9 @@ void GainEditor::resized()
 void GainEditor::timerCallback()
 {
     auto& e = processor.getEngine();
+    const int wantTheme = roundToInt (processor.apvts.getRawParameterValue (ParamID::theme)->load());
+    if (wantTheme != themeIndex) applyTheme (wantTheme);
+
     const float target = processor.apvts.getRawParameterValue (ParamID::target)->load();
     const float rms = e.rmsDb.load(), peak = e.peakDb.load();
 
@@ -123,10 +171,32 @@ void GainEditor::timerCallback()
     if (slowDb < -150.0f) slowDb = rmsIn;
     slowDb += (rmsIn - slowDb) * 0.0165f;
     const float db = peak > -1.0f ? jmax (slowDb, -2.0f) : slowDb;   // echte Spitzen nahe 0 dBFS faerben trotzdem rot
-    const Colour wanted = levelColour (db, target);
+    const Colour wanted = levelColour (*th, db, target);
     tint = tint.interpolatedWith (wanted, 0.25f);
+
+    // Sweet Spot der letzten Calibration: beim Ueberfahren blitzt das Plugin kurz gruen, am Punkt bleibt es etwas heller
+    {
+        const float sweet = processor.sweetGainDb.load();
+        const float gainNow = processor.apvts.getRawParameterValue (ParamID::gain)->load();
+        bool atSweet = false;
+        if (! std::isnan (sweet))
+        {
+            atSweet = std::abs (gainNow - sweet) < 0.15f;
+            const bool crossed = sweetInit && (prevGain - sweet) * (gainNow - sweet) < 0.0f;
+            if (sweetInit && (crossed || (atSweet && ! wasAtSweet)) && gainNow != prevGain) flash = 1.0f;
+        }
+        const float rest = atSweet ? 0.3f : 0.0f;
+        flash = rest + (flash - rest) * 0.88f;
+        wasAtSweet = atSweet;
+        prevGain = gainNow;
+        sweetInit = true;
+        gainKnob.getProperties().set ("sweet", (double) (std::isnan (sweet) ? -1000.0f : sweet));
+    }
+    shownTint = tint.interpolatedWith (th->green, jlimit (0.0f, 1.0f, flash));
+
     const float wantGlow = db > -4.0f ? 0.95f : db > target + 2.0f ? 0.5f : db > target - 2.0f ? 0.4f : 0.2f;
     glow += (wantGlow - glow) * 0.2f;
+    shownGlow = jmax (glow, flash * 0.95f);
 
     meter.setTarget (target);
     meter.setMode (roundToInt (processor.apvts.getRawParameterValue (ParamID::meterMode)->load()));
@@ -134,8 +204,8 @@ void GainEditor::timerCallback()
     const float pkCh[2] = { e.peakDbCh[0].load(), e.peakDbCh[1].load() };
     meter.setLevels (rmsCh, pkCh);
 
-    gainKnob.getProperties().set ("tint", tint.toString());
-    gainKnob.getProperties().set ("glow", (double) glow);
+    gainKnob.getProperties().set ("tint", shownTint.toString());
+    gainKnob.getProperties().set ("glow", (double) (shownGlow * th->glowScale));
     gainKnob.repaint();
 
     auto setupChoice = [&] (TextButton& b, const char* id, const StringArray& names)
@@ -143,14 +213,14 @@ void GainEditor::timerCallback()
         const int v = roundToInt (processor.apvts.getRawParameterValue (id)->load());
         b.getProperties().set ("state", names[jlimit (0, 2, v)]);
         b.getProperties().set ("active", v != 0);
-        b.getProperties().set ("tint", tint.toString());
+        b.getProperties().set ("tint", shownTint.toString());
         b.repaint();
     };
     {
         const bool on = processor.apvts.getRawParameterValue (ParamID::mono)->load() > 0.5f;
         monoBtn.getProperties().set ("state", on ? "ON" : "OFF");
         monoBtn.getProperties().set ("active", on);
-        monoBtn.getProperties().set ("tint", tint.toString());
+        monoBtn.getProperties().set ("tint", shownTint.toString());
         monoBtn.repaint();
     }
     setupChoice (lowBtn, ParamID::lowCut, { "OFF", "25 Hz", "100 Hz" });
@@ -161,7 +231,7 @@ void GainEditor::timerCallback()
     if (ticks > 0) processor.noSignalTicks = --ticks;
     calBtn.getProperties().set ("calibrating", cal);
     calBtn.getProperties().set ("progress", (double) e.getCalProgress());
-    calBtn.getProperties().set ("tint", tint.toString());
+    calBtn.getProperties().set ("tint", shownTint.toString());
     int limTicks = processor.peakLimitTicks.load();
     if (limTicks > 0) processor.peakLimitTicks = --limTicks;
     calBtn.setButtonText (cal ? "LISTENING" : ticks > 0 ? "NO SIGNAL" : limTicks > 0 ? "PEAK LIMIT" : "CALIBRATE");
@@ -172,22 +242,24 @@ void GainEditor::timerCallback()
 
 void GainEditor::paint (Graphics& g)
 {
+    GAIN_LOCALS (*th);
+    const float gs = th->glowScale;
     const auto bounds = getLocalBounds().toFloat();
     g.setGradientFill (ColourGradient (bgTop, 0.0f, 0.0f, bgBottom, 0.0f, bounds.getBottom(), false));
     g.fillAll();
 
     // Schein hinter dem Knob in der aktuellen Pegelfarbe
     const auto c = Point<float> (134.0f * scale, 224.0f * scale);
-    const float rad = (150.0f + 260.0f * glow) * scale;
-    g.setGradientFill (ColourGradient (tint.withAlpha (0.03f + 0.36f * glow), c.x, c.y,
-                                       tint.withAlpha (0.0f), c.x + rad, c.y, true));
+    const float rad = (150.0f + 260.0f * shownGlow) * scale;
+    g.setGradientFill (ColourGradient (shownTint.withAlpha ((0.03f + 0.36f * shownGlow) * gs), c.x, c.y,
+                                       shownTint.withAlpha (0.0f), c.x + rad, c.y, true));
     g.fillAll();
 
     // Kopfzeile wie bei den anderen Plugins: Titel gross, klein daneben "by Dani Koenig . v1.x" auf der Grundlinie
     const String byText = String::fromUTF8 ("by Dani Koenig  \xc2\xb7  v") + JucePlugin_VersionString;
     {
         const String title = "GAIN";
-        const float titleSize = 60.0f * scale, spacing = 12.0f * scale, smallSize = 11.0f * scale, gapW = 14.0f * scale;
+        const float titleSize = 60.0f * scale, spacing = th->titleSpacing * scale, smallSize = 11.0f * scale, gapW = 14.0f * scale;
         Font big (gainFont (titleSize, true)), small (gainFont (smallSize));
         float titleW = 0.0f;
         for (int i = 0; i < title.length(); ++i)
@@ -219,6 +291,8 @@ void GainEditor::paint (Graphics& g)
 
 void GainEditor::paintOverChildren (Graphics& g)
 {
+    GAIN_LOCALS (*th);
+    const float gs = th->glowScale;
     if (meter.isTargetActive())
     {
         const float db = targetShown;
@@ -230,7 +304,7 @@ void GainEditor::paintOverChildren (Graphics& g)
         auto box = Rectangle<float> (mb.getX() - 18.0f * scale - w, cy - h * 0.5f, w, h);
         g.setColour (inset.withAlpha (0.96f));
         g.fillRoundedRectangle (box, 6.0f * scale);
-        g.setColour (tint.withAlpha (0.9f));
+        g.setColour (shownTint.withAlpha (0.9f));
         g.drawRoundedRectangle (box, 6.0f * scale, 1.2f);
         g.setColour (text);
         g.setFont (f1);
@@ -238,6 +312,13 @@ void GainEditor::paintOverChildren (Graphics& g)
     }
 
     auto r = getLocalBounds().toFloat().reduced (1.0f);
-    g.setColour (tint.withAlpha (0.08f + 0.6f * glow * glow));
-    g.drawRoundedRectangle (r, 6.0f * scale, 1.5f);
+    if (th->frame.getAlpha() > 0)
+    {
+        // fester Rahmen wie bei den anderen Plugins, der Pegel-Schein sitzt knapp innen
+        g.setColour (th->frame.withAlpha (0.9f));
+        g.drawRoundedRectangle (r, th->radius * scale, 2.0f);
+        r = r.reduced (3.5f * scale);
+    }
+    g.setColour (shownTint.withAlpha ((0.08f + 0.6f * shownGlow * shownGlow) * jmax (gs, 0.5f)));
+    g.drawRoundedRectangle (r, th->radius * scale, 1.5f);
 }
