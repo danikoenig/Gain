@@ -27,7 +27,8 @@ struct GainParams
     float gainDb   = 0.0f;    // -35..+35
     int   lowCut   = 0;       // 0 = aus, 1 = 25 Hz, 2 = 100 Hz
     int   highCut  = 0;       // 0 = aus, 1 = 18 kHz, 2 = 10 kHz
-    float targetDb = -18.0f;  // Zielpegel (RMS, dBFS) fuer Calibration und Farben
+    float targetDb = -18.0f;  // Zielpegel (VU 0, dBFS) fuer Calibration und Farben
+    bool  mono     = false;   // Stereo -> Mono ((L+R)/2), nach den Filtern, vor Messung und Gain
 };
 
 class GainEngine
@@ -93,7 +94,7 @@ private:
 
     Channel ch[maxChannels];
     float lcGain[3] = { 1, 0, 0 }, hcGain[3] = { 1, 0, 0 };
-    float gainLin = 1.0f;
+    float gainLin = 1.0f, monoMix = 0.0f;
 
     // Peak-Anzeige mit Halten und Abfall
     float peakLin = 0.0f;

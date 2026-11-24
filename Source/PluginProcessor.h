@@ -9,6 +9,7 @@ namespace ParamID
     inline constexpr const char* lowCut  = "lowcut";
     inline constexpr const char* highCut = "highcut";
     inline constexpr const char* target  = "target";
+    inline constexpr const char* mono    = "mono";
 }
 
 class GainProcessor : public juce::AudioProcessor, private juce::AsyncUpdater, private juce::Timer
@@ -52,7 +53,7 @@ private:
 
     GainEngine engine;
     std::atomic<float>* pGain = nullptr; std::atomic<float>* pLow = nullptr;
-    std::atomic<float>* pHigh = nullptr; std::atomic<float>* pTarget = nullptr;
+    std::atomic<float>* pHigh = nullptr; std::atomic<float>* pTarget = nullptr; std::atomic<float>* pMono = nullptr;
 
     // Animation: Gain-Knob dreht sich nach der Calibration zum neuen Wert
     std::atomic<float> pendingGainDb { 0.0f };

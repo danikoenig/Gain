@@ -136,7 +136,7 @@ void GainLookAndFeel::drawButtonText (Graphics& g, TextButton& b, bool, bool)
     if (label.isEmpty())
     {
         g.setColour (text.withAlpha (0.92f));
-        g.setFont (gainFont (13.0f * s, true));
+        g.setFont (gainFont (11.0f * s, true));
         g.drawText (b.getButtonText(), r, Justification::centred);
         return;
     }

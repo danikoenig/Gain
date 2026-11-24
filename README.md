@@ -5,7 +5,7 @@ Kleines Gain-Staging-Utility fuer den Kanalanfang (macOS Apple Silicon, VST3, Au
 - Grosser Gain-Knopf, +/-35 dB
 - Meter: VU (wie VUMT) und True Peak, Skala in VU relativ zum Ziel, Zielpegel per Dreieck, Farben blau / gruen / gelb / rot
 - Calibration: 5 Sekunden zuhoeren, Gain auf den Zielpegel setzen (Messung nach den Filtern)
-- Low Cut (aus / 25 / 100 Hz), High Cut (aus / 18 kHz / 10 kHz), DC-Offset immer entfernt
+- Mono-Schalter ((L+R)/2), Low Cut (aus / 25 / 100 Hz), High Cut (aus / 18 kHz / 10 kHz), DC-Offset immer entfernt
 
 Installation: siehe INSTALL.txt. Build: GitHub Actions (siehe .github/workflows/build.yml).
 

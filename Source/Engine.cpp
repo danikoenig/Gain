@@ -110,6 +110,7 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
     const float gainTarget = GainDSP::toLin (std::max (-maxGainDb, std::min (maxGainDb, p.gainDb)));
 
     float blockPeak = 0.0f;
+    const float monoTarget = (p.mono && numCh == 2) ? 1.0f : 0.0f;
 
     for (int i = 0; i < n; ++i)
     {
@@ -119,8 +120,9 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
             hcGain[k] += (hcT[k] - hcGain[k]) * kRamp;
         }
         gainLin += (gainTarget - gainLin) * kGain;
+        monoMix += (monoTarget - monoMix) * kRamp;
 
-        double preSq = 0.0;
+        float zc[maxChannels] = {};
         for (int c = 0; c < numCh; ++c)
         {
             auto& s = ch[c];
@@ -136,9 +138,23 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
             float y = lcGain[0] * x + lcGain[1] * l25 + lcGain[2] * l100;
             // High-Cut
             const float h18 = s.hc18.process (y), h10 = s.hc10.process (y);
-            const float z = hcGain[0] * y + hcGain[1] * h18 + hcGain[2] * h10;
+            zc[c] = hcGain[0] * y + hcGain[1] * h18 + hcGain[2] * h10;
+        }
 
-            preSq += std::abs ((double) z);   // Messpunkt fuer Calibration: nach den Filtern, vor dem Gain
+        // Mono: (L+R)/2, weich ein- und ausgeblendet
+        if (numCh == 2 && monoMix > 1.0e-4f)
+        {
+            const float mid = 0.5f * (zc[0] + zc[1]);
+            zc[0] += (mid - zc[0]) * monoMix;
+            zc[1] += (mid - zc[1]) * monoMix;
+        }
+
+        double preSq = 0.0;
+        for (int c = 0; c < numCh; ++c)
+        {
+            auto& s = ch[c];
+            const float z = zc[c];
+            preSq += std::abs ((double) z);   // Messpunkt fuer Calibration: nach Filtern und Mono, vor dem Gain
 
             const float o = z * gainLin;
             data[c][i] = o;

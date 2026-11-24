@@ -26,7 +26,7 @@ private:
 
     juce::Slider gainKnob;
     GainMeter meter;
-    juce::TextButton lowBtn, highBtn, calBtn { "CALIBRATE" };
+    juce::TextButton monoBtn, lowBtn, highBtn, calBtn { "CALIBRATE" };
 
     using SA = juce::AudioProcessorValueTreeState::SliderAttachment;
     std::unique_ptr<SA> gainAtt;

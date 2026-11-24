@@ -125,6 +125,7 @@ HOW TO USE (SHORT)
 - CALIBRATE: listens for 5 seconds and sets GAIN so the average level lands on the triangle.
   The knob turns to the new value. It measures after the filters. Quiet gaps are ignored.
   If you change a filter afterwards, press CALIBRATE again (it never turns by itself).
+- MONO: sums left and right to (L+R)/2, before the meter, calibration and gain.
 - LOW CUT: off / 25 Hz / 100 Hz (12 dB/oct). Click to switch.
 - HIGH CUT: off / 18 kHz / 10 kHz (12 dB/oct). Click to switch.
 - DC offset is always removed (5 Hz).
@@ -290,6 +291,7 @@ KURZ ZUR BEDIENUNG
 - CALIBRATE: hoert 5 Sekunden zu und stellt GAIN so, dass der mittlere Pegel auf dem Dreieck landet.
   Der Knopf dreht sich auf den neuen Wert. Gemessen wird nach den Filtern, leise Pausen zaehlen nicht.
   Aenderst du danach einen Filter, druecke CALIBRATE nochmal (es dreht nie von selbst).
+- MONO: summiert links und rechts zu (L+R)/2, vor Meter, Calibration und Gain.
 - LOW CUT: aus / 25 Hz / 100 Hz (12 dB/Okt). Klick zum Umschalten.
 - HIGH CUT: aus / 18 kHz / 10 kHz (12 dB/Okt). Klick zum Umschalten.
 - DC-Offset wird immer entfernt (5 Hz).

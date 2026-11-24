@@ -29,10 +29,21 @@ GainEditor::GainEditor (GainProcessor& p) : AudioProcessorEditor (&p), processor
         }
     };
 
+    monoBtn.getProperties().set ("label", "MONO");
     lowBtn.getProperties().set ("label", "LOW CUT");
     highBtn.getProperties().set ("label", "HIGH CUT");
+    monoBtn.setTooltip ("Mono: sums left and right to (L+R)/2, before the meter and the gain");
     lowBtn.setTooltip ("Low cut: off / 25 Hz / 100 Hz (12 dB/oct)");
     highBtn.setTooltip ("High cut: off / 18 kHz / 10 kHz (12 dB/oct)");
+    monoBtn.onClick = [this]
+    {
+        if (auto* par = processor.apvts.getParameter (ParamID::mono))
+        {
+            par->beginChangeGesture();
+            par->setValueNotifyingHost (par->getValue() > 0.5f ? 0.0f : 1.0f);
+            par->endChangeGesture();
+        }
+    };
     lowBtn.onClick  = [this] { cycleChoice (ParamID::lowCut); };
     highBtn.onClick = [this] { cycleChoice (ParamID::highCut); };
     calBtn.setTooltip ("Listens for 5 s and sets GAIN so the VU level lands on 0 (the triangle)");
@@ -41,6 +52,7 @@ GainEditor::GainEditor (GainProcessor& p) : AudioProcessorEditor (&p), processor
         auto& e = processor.getEngine();
         if (e.isCalibrating()) e.cancelCalibration(); else e.startCalibration();
     };
+    addAndMakeVisible (monoBtn);
     addAndMakeVisible (lowBtn);
     addAndMakeVisible (highBtn);
     addAndMakeVisible (calBtn);
@@ -82,9 +94,10 @@ void GainEditor::resized()
     gainKnob.setTextBoxStyle (Slider::TextBoxBelow, false, roundToInt (120 * scale), roundToInt (24 * scale));
     meter.setBounds (R (268, 84, 76, 276));
 
-    lowBtn.setBounds  (R (16, 392, 102, 44));
-    highBtn.setBounds (R (129, 392, 102, 44));
-    calBtn.setBounds  (R (242, 392, 102, 44));
+    monoBtn.setBounds (R (16, 392, 76, 44));
+    lowBtn.setBounds  (R (100, 392, 76, 44));
+    highBtn.setBounds (R (184, 392, 76, 44));
+    calBtn.setBounds  (R (268, 392, 76, 44));
 }
 
 void GainEditor::timerCallback()
@@ -116,6 +129,13 @@ void GainEditor::timerCallback()
         b.getProperties().set ("tint", tint.toString());
         b.repaint();
     };
+    {
+        const bool on = processor.apvts.getRawParameterValue (ParamID::mono)->load() > 0.5f;
+        monoBtn.getProperties().set ("state", on ? "ON" : "OFF");
+        monoBtn.getProperties().set ("active", on);
+        monoBtn.getProperties().set ("tint", tint.toString());
+        monoBtn.repaint();
+    }
     setupChoice (lowBtn, ParamID::lowCut, { "OFF", "25 Hz", "100 Hz" });
     setupChoice (highBtn, ParamID::highCut, { "OFF", "18 kHz", "10 kHz" });
 
@@ -125,7 +145,7 @@ void GainEditor::timerCallback()
     calBtn.getProperties().set ("calibrating", cal);
     calBtn.getProperties().set ("progress", (double) e.getCalProgress());
     calBtn.getProperties().set ("tint", tint.toString());
-    calBtn.setButtonText (cal ? "LISTENING..." : ticks > 0 ? "NO SIGNAL" : "CALIBRATE");
+    calBtn.setButtonText (cal ? "LISTENING" : ticks > 0 ? "NO SIGNAL" : "CALIBRATE");
     calBtn.repaint();
 
     repaint (R (0, 0, designW, 84));   // Pegelzahlen

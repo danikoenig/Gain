@@ -128,6 +128,27 @@ int main()
         float g = 0; e.popCalibrationResult (g);
         CHECK (std::abs (g - 35.0f) < 0.01f, "calibration clamps to +35 dB");
     }
+    { // Mono: gegenphasig -> Stille, nur links -> beide Seiten halbe Amplitude
+        GainEngine e; e.prepare (fs); GainParams m; m.mono = true;
+        std::vector<float> L = sine (fs, 1000, 0.5, 48000), R = L;
+        for (auto& v : R) v = -v;
+        for (size_t i = 0; i < L.size(); i += 512)
+        {
+            float* c[2] = { L.data() + i, R.data() + i };
+            e.process (c, 2, (int) std::min<size_t> (512, L.size() - i), m);
+        }
+        CHECK (rmsDb (L, 24000) < -90.0 && rmsDb (R, 24000) < -90.0, "mono cancels out-of-phase signal");
+        GainEngine e2; e2.prepare (fs);
+        std::vector<float> A = sine (fs, 1000, 0.5, 48000), B (48000, 0.0f);
+        const double inDb = rmsDb (A, 24000);
+        for (size_t i = 0; i < A.size(); i += 512)
+        {
+            float* c[2] = { A.data() + i, B.data() + i };
+            e2.process (c, 2, (int) std::min<size_t> (512, A.size() - i), m);
+        }
+        std::printf ("      mono: L %.2f dB, R %.2f dB (in %.2f)\n", rmsDb (A, 24000), rmsDb (B, 24000), inDb);
+        CHECK (std::abs (rmsDb (A, 24000) - (inDb - 6.02)) < 0.3 && std::abs (rmsDb (A, 24000) - rmsDb (B, 24000)) < 0.05, "mono sums to (L+R)/2");
+    }
     std::printf (fails ? "\n%d FAILED\n" : "\nall passed\n", fails);
     return fails ? 1 : 0;
 }

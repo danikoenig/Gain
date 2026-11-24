@@ -20,6 +20,8 @@ AudioProcessorValueTreeState::ParameterLayout GainProcessor::createLayout()
                     NormalisableRange<float> (-36.0f, -6.0f, 0.5f), -18.0f,
                     AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) { return String (v, 1) + " dBFS"; })));
 
+    p.push_back (std::make_unique<AudioParameterBool> (ParameterID { ParamID::mono, 1 }, "Mono", false));
+
     return { p.begin(), p.end() };
 }
 
@@ -32,6 +34,7 @@ GainProcessor::GainProcessor()
     pLow    = apvts.getRawParameterValue (ParamID::lowCut);
     pHigh   = apvts.getRawParameterValue (ParamID::highCut);
     pTarget = apvts.getRawParameterValue (ParamID::target);
+    pMono   = apvts.getRawParameterValue (ParamID::mono);
 }
 
 bool GainProcessor::isBusesLayoutSupported (const BusesLayout& l) const
@@ -56,6 +59,7 @@ void GainProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer&)
     p.lowCut   = (int) pLow->load();
     p.highCut  = (int) pHigh->load();
     p.targetDb = pTarget->load();
+    p.mono     = pMono->load() > 0.5f;
 
     engine.process (buffer.getArrayOfWritePointers(), jmin (buffer.getNumChannels(), getTotalNumInputChannels()),
                     buffer.getNumSamples(), p);
