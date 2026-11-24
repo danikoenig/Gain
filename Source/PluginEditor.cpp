@@ -260,7 +260,7 @@ void GainEditor::paint (Graphics& g)
     {
         const String title = "GAIN";
         const float titleSize = 60.0f * scale, spacing = th->titleSpacing * scale, smallSize = 11.0f * scale, gapW = 14.0f * scale;
-        Font big (gainFont (titleSize, true)), small (gainFont (smallSize));
+        Font big (gainFont (*th, titleSize, true)), small (gainFont (*th, smallSize));
         float titleW = 0.0f;
         for (int i = 0; i < title.length(); ++i)
             titleW += big.getStringWidthFloat (String::charToString (title[i])) + spacing;
@@ -299,7 +299,7 @@ void GainEditor::paintOverChildren (Graphics& g)
         const auto mb = meter.getBounds().toFloat();
         const float cy = mb.getY() + meter.getTargetY();
         const String line1 = "TARGET  " + String (db, 1) + " dBFS RMS";
-        Font f1 (gainFont (12.0f * scale, true));
+        Font f1 (gainFont (*th, 12.0f * scale, true));
         const float w = f1.getStringWidthFloat (line1) + 20.0f * scale, h = 24.0f * scale;
         auto box = Rectangle<float> (mb.getX() - 18.0f * scale - w, cy - h * 0.5f, w, h);
         g.setColour (inset.withAlpha (0.96f));

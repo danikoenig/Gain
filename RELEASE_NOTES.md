@@ -1,5 +1,9 @@
 Free gain-staging utility for macOS (Apple Silicon), VST3, Audio Unit and CLAP. By Dani Koenig.
 
+### v1.5.2
+- **Themes renamed:** Init (the original), Light Gray, Dark, Colorblind. A theme chosen before keeps its position
+- **Fonts per theme:** Init and Colorblind keep the standard JUCE font like the other plugins; Light Gray uses Avenir Next (a friendly humanist sans, closer to Ableton / Bitwig); Dark uses Helvetica Neue
+
 ### v1.5.1
 - **Themes reduced to four and reworked:** JUCE (original, orange frame), Grey (all greys: darker display areas, lighter buttons), Dark (black, cold, steel frame, dial scale around the knob, darker blue and green, blood-red overload), Colour-Blind. Projects saved with v1.5.0 may show a different theme once; choose it again
 - **Theme menu:** click (left or right) the header; the menu now opens directly under the title

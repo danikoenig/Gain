@@ -29,7 +29,7 @@ Label* GainLookAndFeel::createSliderTextBox (Slider& s)
 {
     GAIN_LOCALS (*theme);
     auto* l = LookAndFeel_V4::createSliderTextBox (s);
-    l->setFont (gainFont (15.0f, true));
+    l->setFont (gainFont (*theme, 15.0f, true));
     l->setJustificationType (Justification::centred);
     l->setColour (Label::textColourId, text);
     l->setColour (Label::backgroundColourId, Colours::transparentBlack);
@@ -174,15 +174,15 @@ void GainLookAndFeel::drawButtonText (Graphics& g, TextButton& b, bool, bool)
     if (label.isEmpty())
     {
         g.setColour (btnText.withAlpha (0.92f));
-        g.setFont (gainFont (11.0f * s, true));
+        g.setFont (gainFont (*theme, 11.0f * s, true));
         g.drawText (b.getButtonText(), r, Justification::centred);
         return;
     }
     g.setColour (btnTextDim);
-    g.setFont (gainFont (9.5f * s, true));
+    g.setFont (gainFont (*theme, 9.5f * s, true));
     g.drawText (label, r.withTrimmedTop (6.0f * s).withHeight (12.0f * s), Justification::centred);
     g.setColour (active ? btnText : btnTextDim.interpolatedWith (btnText, 0.2f));
-    g.setFont (gainFont (15.0f * s, true));
+    g.setFont (gainFont (*theme, 15.0f * s, true));
     g.drawText (state, r.withTrimmedTop (19.0f * s).withHeight (19.0f * s), Justification::centred);
 }
 
@@ -255,7 +255,7 @@ void GainMeter::paint (Graphics& g)
     drawBar (barR, rmsDb[1], peakDb[1]);
 
     // Skala
-    g.setFont (gainFont (8.5f * s, true));
+    g.setFont (gainFont (*th, 8.5f * s, true));
     // Skala: RMS-Modi relativ zum Ziel (0 = Dreieck), True-Peak-Modus absolut in dBFS
     const bool absolute = (mode == 1);
     static const float relMarks[] = { 3.0f, 0.0f, -3.0f, -6.0f, -10.0f, -20.0f, -30.0f };

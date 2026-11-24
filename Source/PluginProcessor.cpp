@@ -24,9 +24,9 @@ AudioProcessorValueTreeState::ParameterLayout GainProcessor::createLayout()
     // Anzeige: 0 = RMS (Standard), 1 = True Peak, 2 = RMS + Peak
     p.push_back (std::make_unique<AudioParameterChoice> (ParameterID { ParamID::meterMode, 1 }, "Meter Mode",
                     StringArray { "RMS", "True Peak", "RMS + Peak" }, 0));
-    // Aussehen: 0 JUCE (Original), 1 Grey, 2 Dark, 3 Colour-Blind
+    // Aussehen: 0 Init (Original), 1 Light Gray, 2 Dark, 3 Colorblind
     p.push_back (std::make_unique<AudioParameterChoice> (ParameterID { ParamID::theme, 1 }, "Theme",
-                    StringArray { "JUCE", "Grey", "Dark", "Colour-Blind" }, 0));
+                    StringArray { "Init", "Light Gray", "Dark", "Colorblind" }, 0));
 
     return { p.begin(), p.end() };
 }

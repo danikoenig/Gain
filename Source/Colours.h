@@ -9,7 +9,8 @@ namespace GainColours
 {
     struct Theme
     {
-        const char* name = "JUCE";
+        const char* name = "Init";
+        const char* fontName = "";   // leer = JUCE-Standardschrift
         juce::Colour bgTop, bgBottom, card, cardBorder, inset, text, textDim, knobTrack, knobBody;
         juce::Colour blue, green, yellow, red;
         juce::Colour frame { juce::Colours::transparentBlack };   // fester Rahmen ums Fenster (transparent = keiner)
@@ -28,10 +29,10 @@ namespace GainColours
             std::array<Theme, 4> a;
             auto C = [] (juce::uint32 v) { return juce::Colour (v); };
 
-            // 0: JUCE (das Original, mit orangem Rahmen wie die anderen Plugins)
+            // 0: Init (das Original, mit orangem Rahmen wie die anderen Plugins)
             {
                 auto& t = a[0];
-                t.name = "JUCE";
+                t.name = "Init";
                 t.bgTop = C (0xff17181c);   t.bgBottom = C (0xff0d0e11);
                 t.card = C (0xff1d1f24);    t.cardBorder = C (0xff2b2e35);
                 t.inset = C (0xff121317);   t.text = C (0xffeceef2);
@@ -41,10 +42,11 @@ namespace GainColours
                 t.yellow = C (0xffffc933);  t.red = C (0xffff1f3f);
                 t.frame = C (0xffff7a2f);
             }
-            // 1: Grey (an Abletons Grau angelehnt): alles Grau, Anzeigeflaechen dunkler, Buttons heller
+            // 1: Light Gray (an Ableton / Bitwig angelehnt): alles Grau, Anzeigeflaechen dunkler, Buttons heller
             {
                 auto& t = a[1];
-                t.name = "Grey";
+                t.name = "Light Gray";
+                t.fontName = "Avenir Next";
                 t.bgTop = C (0xff535353);   t.bgBottom = C (0xff494949);
                 t.card = C (0xff5c5c5c);    t.cardBorder = C (0xff2a2a2a);
                 t.inset = C (0xff1f1f1f);   t.text = C (0xffeeeeee);
@@ -61,6 +63,7 @@ namespace GainColours
             {
                 auto& t = a[2];
                 t.name = "Dark";
+                t.fontName = "Helvetica Neue";
                 t.bgTop = C (0xff0a0a0b);   t.bgBottom = C (0xff030304);
                 t.card = C (0xff111214);    t.cardBorder = C (0xff373b40);
                 t.inset = C (0xff050506);   t.text = C (0xffeef1f4);
@@ -75,7 +78,7 @@ namespace GainColours
             // 3: Colour-Blind: Blau - Weiss - Orange - Violett statt Rot/Gruen, plus Muster in der Warnzone
             {
                 auto& t = a[3];
-                t.name = "Colour-Blind";
+                t.name = "Colorblind";
                 t.bgTop = C (0xff17181c);   t.bgBottom = C (0xff0d0e11);
                 t.card = C (0xff1d1f24);    t.cardBorder = C (0xff3a3e46);
                 t.inset = C (0xff121317);   t.text = C (0xfff4f4f4);

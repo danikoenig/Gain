@@ -3,10 +3,13 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Colours.h"
 
-// Schrift: wie bei den anderen Plugins die Standardschrift von JUCE (kein Schriftname gesetzt)
-inline juce::FontOptions gainFont (float size, bool bold = false)
+// Schrift: Init wie bei den anderen Plugins die Standardschrift von JUCE (kein Schriftname gesetzt)
+// Je Theme kann eine eigene Schrift gesetzt sein (Init und Colorblind: Standard)
+inline juce::FontOptions gainFont (const GainColours::Theme& t, float size, bool bold = false)
 {
-    return juce::FontOptions (size, bold ? juce::Font::bold : juce::Font::plain);
+    juce::FontOptions f (size, bold ? juce::Font::bold : juce::Font::plain);
+    if (t.fontName[0] != 0) f = f.withName (t.fontName);
+    return f;
 }
 
 // Look & Feel im Dani-Koenig-Design (wie Knack, One Shooter ...), Hochformat
