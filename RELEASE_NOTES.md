@@ -1,5 +1,8 @@
 Free gain-staging utility for macOS (Apple Silicon), VST3, Audio Unit and CLAP. By Dani Koenig.
 
+### v1.2.0
+- Meter like Ableton: two bars (left / right), each with VU (darker) and true peak (lighter) on top, with a hold line
+
 ### v1.1.2
 - Target is now a plain RMS level: -18 dBFS RMS (default) = a sine with -15 dBFS peak. Meter and CALIBRATE use this scale
 

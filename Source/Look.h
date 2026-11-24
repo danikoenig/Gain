@@ -21,12 +21,17 @@ public:
     juce::Label* createSliderTextBox (juce::Slider&) override;
 };
 
-// Meter: breiter Balken = VU (Ballistik 300 ms), schmaler Balken = True Peak (mit Halten),
+// Meter wie bei Ableton: zwei Balken (links / rechts), jeder mit VU (Ballistik 300 ms, volle Farbe)
+// und True Peak (gedaempft darueber, mit Halten) uebereinander,
 // Dreieck links = Zielpegel = 0 VU (ziehen), Skala in VU relativ zum Ziel, Farben nach dem Zielpegel
 class GainMeter : public juce::Component
 {
 public:
-    void setLevels (float rms, float peak) { rmsDb = rms; peakDb = peak; repaint(); }
+    void setLevels (const float* rms2, const float* peak2)   // links, rechts
+    {
+        for (int i = 0; i < 2; ++i) { rmsDb[i] = rms2[i]; peakDb[i] = peak2[i]; }
+        repaint();
+    }
     void setTarget (float t) { if (std::abs (t - targetDb) > 0.001f) { targetDb = t; repaint(); } }
     float getTarget() const { return targetDb; }
 
@@ -44,5 +49,5 @@ private:
     juce::Rectangle<float> barArea() const;
     void drag (const juce::MouseEvent&, int phase);
 
-    float rmsDb = -100.0f, peakDb = -100.0f, targetDb = -18.0f;
+    float rmsDb[2] = { -100.0f, -100.0f }, peakDb[2] = { -100.0f, -100.0f }, targetDb = -18.0f;
 };

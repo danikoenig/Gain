@@ -149,6 +149,17 @@ int main()
         std::printf ("      mono: L %.2f dB, R %.2f dB (in %.2f)\n", rmsDb (A, 24000), rmsDb (B, 24000), inDb);
         CHECK (std::abs (rmsDb (A, 24000) - (inDb - 6.02)) < 0.3 && std::abs (rmsDb (A, 24000) - rmsDb (B, 24000)) < 0.05, "mono sums to (L+R)/2");
     }
+    { // Pegel je Kanal: links laut, rechts leise
+        GainEngine e; e.prepare (fs); GainParams q;
+        std::vector<float> L = sine (fs, 1000, 0.5, 48000), R = sine (fs, 1000, 0.05, 48000);
+        for (size_t i = 0; i < L.size(); i += 512)
+        {
+            float* c[2] = { L.data() + i, R.data() + i };
+            e.process (c, 2, (int) std::min<size_t> (512, L.size() - i), q);
+        }
+        std::printf ("      L rms %.1f peak %.1f | R rms %.1f peak %.1f\n", e.rmsDbCh[0].load(), e.peakDbCh[0].load(), e.rmsDbCh[1].load(), e.peakDbCh[1].load());
+        CHECK (std::abs (e.rmsDbCh[0].load() - e.rmsDbCh[1].load() - 20.0f) < 0.5f && e.peakDbCh[0].load() > e.rmsDbCh[0].load(), "per-channel meters");
+    }
     std::printf (fails ? "\n%d FAILED\n" : "\nall passed\n", fails);
     return fails ? 1 : 0;
 }

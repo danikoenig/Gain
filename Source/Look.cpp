@@ -174,29 +174,41 @@ void GainMeter::paint (Graphics& g)
 {
     const float s = (float) getWidth() / 76.0f;
     auto a = barArea();
-    const float rmsW = 22.0f * s, gap = 4.0f * s, pkW = 8.0f * s;
-    auto rmsBar = Rectangle<float> (a.getX(), a.getY(), rmsW, a.getHeight());
-    auto pkBar = Rectangle<float> (rmsBar.getRight() + gap, a.getY(), pkW, a.getHeight());
+    const float barW = 16.0f * s, gap = 4.0f * s;
+    auto barL = Rectangle<float> (a.getX(), a.getY(), barW, a.getHeight());
+    auto barR = barL.translated (barW + gap, 0.0f);
+    const float barsLeft = barL.getX(), barsRight = barR.getRight();
 
     // Hintergrund
     g.setColour (inset);
-    g.fillRoundedRectangle (Rectangle<float> (rmsBar.getX() - 2.0f * s, a.getY() - 2.0f * s,
-                                              pkBar.getRight() - rmsBar.getX() + 4.0f * s, a.getHeight() + 4.0f * s), 4.0f * s);
+    g.fillRoundedRectangle (Rectangle<float> (barsLeft - 2.0f * s, a.getY() - 2.0f * s,
+                                              barsRight - barsLeft + 4.0f * s, a.getHeight() + 4.0f * s), 4.0f * s);
 
-    auto drawBar = [&] (Rectangle<float> bar, float levelDb)
+    // Wie Ableton: je Kanal VU (dunkler) und True Peak (heller darueber) in einem Balken,
+    // dazu ein feiner Strich auf der gehaltenen Spitze
+    auto drawBar = [&] (Rectangle<float> bar, float vuDb, float peakDbIn)
     {
-        const float yLevel = yForDb (levelDb);
+        const float yVu = yForDb (vuDb), yPk = yForDb (peakDbIn);
+        const bool hasVu = vuDb > GainDSP::meterMinDb, hasPk = peakDbIn > GainDSP::meterMinDb;
         const float step = jmax (2.0f, 2.0f * s);
         for (float y = bar.getBottom() - step; y >= bar.getY() - 0.01f; y -= step)
         {
-            const float db = dbForY (y + step * 0.5f);
-            const bool lit = y + step * 0.5f >= yLevel && levelDb > GainDSP::meterMinDb;
-            g.setColour (levelColour (db, targetDb).withAlpha (lit ? 1.0f : 0.13f));
+            const float yc = y + step * 0.5f;
+            const float db = dbForY (yc);
+            const auto base = levelColour (db, targetDb);
+            if (hasVu && yc >= yVu)        g.setColour (base.darker (0.45f));                    // VU: dunkler
+            else if (hasPk && yc >= yPk)   g.setColour (base.brighter (0.5f).withAlpha (0.95f)); // True Peak: heller
+            else                           g.setColour (base.withAlpha (0.13f));
             g.fillRect (bar.getX(), y, bar.getWidth(), step - 0.6f);
         }
+        if (hasPk)
+        {
+            g.setColour (Colours::white.withAlpha (0.9f));
+            g.fillRect (bar.getX(), yPk - 0.75f * s, bar.getWidth(), 1.5f * s);
+        }
     };
-    drawBar (rmsBar, rmsDb);
-    drawBar (pkBar, peakDb);
+    drawBar (barL, rmsDb[0], peakDb[0]);
+    drawBar (barR, rmsDb[1], peakDb[1]);
 
     // Skala
     g.setFont (gainFont (8.5f * s, true));
@@ -207,22 +219,22 @@ void GainMeter::paint (Graphics& g)
         if (db > GainDSP::meterMaxDb || db < GainDSP::meterMinDb) continue;
         const float y = yForDb (db);
         g.setColour (Colours::white.withAlpha (0.18f));
-        g.drawHorizontalLine ((int) y, pkBar.getRight() + 1.0f * s, pkBar.getRight() + 4.0f * s);
+        g.drawHorizontalLine ((int) y, barsRight + 1.0f * s, barsRight + 4.0f * s);
         g.setColour (textDim);
-        g.drawText ((vu > 0.0f ? "+" : "") + String ((int) vu), Rectangle<float> (pkBar.getRight() + 5.0f * s, y - 6.0f * s, 22.0f * s, 12.0f * s),
+        g.drawText ((vu > 0.0f ? "+" : "") + String ((int) vu), Rectangle<float> (barsRight + 5.0f * s, y - 6.0f * s, 22.0f * s, 12.0f * s),
                     Justification::centredLeft);
     }
 
-    // 0 dBFS: feine Linie ueber den True-Peak-Balken
+    // 0 dBFS: feine Linie ueber beide Balken
     g.setColour (Colours::white.withAlpha (0.55f));
-    g.drawHorizontalLine ((int) yForDb (0.0f), pkBar.getX() - 1.0f * s, pkBar.getRight() + 1.0f * s);
+    g.drawHorizontalLine ((int) yForDb (0.0f), barsLeft - 1.0f * s, barsRight + 1.0f * s);
 
     // Zielpegel: Linie ueber den RMS-Balken, Dreieck links (zum Ziehen)
     const float ty = yForDb (targetDb);
     g.setColour (text.withAlpha (0.8f));
-    g.drawHorizontalLine ((int) ty, rmsBar.getX(), rmsBar.getRight());
+    g.drawHorizontalLine ((int) ty, barsLeft, barsRight);
     Path tri;
-    const float tx = rmsBar.getX() - 4.0f * s;
+    const float tx = barsLeft - 4.0f * s;
     tri.addTriangle (tx - 11.0f * s, ty - 6.0f * s, tx - 11.0f * s, ty + 6.0f * s, tx, ty);
     g.setColour (levelColour (targetDb, targetDb).withAlpha (0.35f));
     g.fillPath (tri);

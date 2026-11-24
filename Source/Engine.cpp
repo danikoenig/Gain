@@ -68,7 +68,7 @@ void GainEngine::reset()
         c.lc25.reset(); c.lc100.reset(); c.hc18.reset(); c.hc10.reset();
         std::fill (std::begin (c.hist), std::end (c.hist), 0.0f);
     }
-    peakLin = 0; peakHold = 0;
+    for (int c = 0; c < maxChannels; ++c) { peakLin[c] = 0.0f; peakHold[c] = 0.0; }
     calActive = false; calProgress = 0.0f;
 }
 
@@ -109,7 +109,7 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
     hcT[std::max (0, std::min (2, p.highCut))] = 1.0f;
     const float gainTarget = GainDSP::toLin (std::max (-maxGainDb, std::min (maxGainDb, p.gainDb)));
 
-    float blockPeak = 0.0f;
+    float blockPeak[maxChannels] = {};
     const float monoTarget = (p.mono && numCh == 2) ? 1.0f : 0.0f;
 
     for (int i = 0; i < n; ++i)
@@ -160,7 +160,7 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
             data[c][i] = o;
 
             s.vu += ((double) std::abs (o) - s.vu) * kRms;
-            blockPeak = std::max (blockPeak, truePeakSample (s, o));
+            blockPeak[c] = std::max (blockPeak[c], truePeakSample (s, o));
         }
 
         if (cal)
@@ -181,10 +181,19 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
     for (int c = 0; c < numCh; ++c) vu += ch[c].vu;
     rmsDb = 20.0f * (float) std::log10 (vu / numCh * vuSineScale + 1.0e-6) + rmsOffsetDb;
 
+    // True Peak je Kanal mit Halten (1.5 s) und Abfall (ca. 20 dB/s)
     const double dt = (double) n / fs;
-    if (blockPeak >= peakLin) { peakLin = blockPeak; peakHold = 1.5; }
-    else if ((peakHold -= dt) <= 0.0) peakLin *= (float) std::pow (10.0, -dt);   // ca. 20 dB/s Abfall
-    peakDb = GainDSP::toDb (peakLin);
+    float peakMax = 0.0f;
+    for (int c = 0; c < numCh; ++c)
+    {
+        if (blockPeak[c] >= peakLin[c]) { peakLin[c] = blockPeak[c]; peakHold[c] = 1.5; }
+        else if ((peakHold[c] -= dt) <= 0.0) peakLin[c] *= (float) std::pow (10.0, -dt);
+        peakMax = std::max (peakMax, peakLin[c]);
+        peakDbCh[c] = GainDSP::toDb (peakLin[c]);
+        rmsDbCh[c] = 20.0f * (float) std::log10 (ch[c].vu * vuSineScale + 1.0e-6) + rmsOffsetDb;
+    }
+    if (numCh == 1) { peakDbCh[1] = peakDbCh[0].load(); rmsDbCh[1] = rmsDbCh[0].load(); }   // Mono-Spur: beide Balken gleich
+    peakDb = GainDSP::toDb (peakMax);
 
     // Calibration abschliessen
     if (cal)

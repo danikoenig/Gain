@@ -55,7 +55,9 @@ public:
     bool popCalibrationFailed() { return calFailed.exchange (false); }
 
     // Anzeigen (dBFS, nach Filter und Gain)
-    std::atomic<float> rmsDb { -100.0f }, peakDb { -100.0f };
+    std::atomic<float> rmsDb { -100.0f }, peakDb { -100.0f };            // beide Kanaele zusammen
+    std::atomic<float> rmsDbCh[2] = { { -100.0f }, { -100.0f } };      // je Kanal (links / rechts)
+    std::atomic<float> peakDbCh[2] = { { -100.0f }, { -100.0f } };
 
 private:
     struct Biquad
@@ -97,8 +99,8 @@ private:
     float gainLin = 1.0f, monoMix = 0.0f;
 
     // Peak-Anzeige mit Halten und Abfall
-    float peakLin = 0.0f;
-    double peakHold = 0.0;
+    float peakLin[maxChannels] = {};
+    double peakHold[maxChannels] = {};
 
     // Calibration
     std::atomic<bool> calRequest { false }, calCancel { false }, calActive { false }, calDone { false }, calFailed { false };

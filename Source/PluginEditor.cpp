@@ -115,7 +115,9 @@ void GainEditor::timerCallback()
     glow += (wantGlow - glow) * 0.2f;
 
     meter.setTarget (target);
-    meter.setLevels (rms, peak);
+    const float rmsCh[2] = { e.rmsDbCh[0].load(), e.rmsDbCh[1].load() };
+    const float pkCh[2] = { e.peakDbCh[0].load(), e.peakDbCh[1].load() };
+    meter.setLevels (rmsCh, pkCh);
 
     gainKnob.getProperties().set ("tint", tint.toString());
     gainKnob.getProperties().set ("glow", (double) glow);
