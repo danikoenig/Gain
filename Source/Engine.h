@@ -12,7 +12,7 @@ namespace GainDSP
     constexpr float meterMinDb  = -48.0f;   // unteres Ende der Meter-Skala
     constexpr float meterMaxDb  = 3.0f;     // oberes Ende (True Peak kann ueber 0 liegen)
     constexpr float calSeconds  = 5.0f;
-    constexpr float rmsOffsetDb = 3.0103f;  // AES-17: Sinus mit -18 dBFS Spitze = -18 Anzeige (VU 0 bei CAL -18)
+    constexpr float rmsOffsetDb = 0.0f;     // Anzeige = normaler RMS in dBFS (Sinus mit -15 dBFS Spitze = -18 dBFS RMS)
     constexpr float vuSineScale = 1.1107f;  // Mittelwert gleichgerichtet -> Sinus-Effektivwert (pi / (2 sqrt 2))
     constexpr float calGateDb   = -55.0f;   // Bloecke leiser als das zaehlen bei der Messung nicht
     constexpr float lowCutHz[3]  = { 0.0f, 25.0f, 100.0f };

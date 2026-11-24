@@ -108,7 +108,7 @@ void GainEditor::timerCallback()
 
     // Anzeigewerte, Farbe und Glow folgen dem RMS-Pegel relativ zum Zielpegel
     rmsShown = rms; peakShown = peak; targetShown = target;
-    const float db = rms < -70.0f ? target - 20.0f : rms;   // Stille = blau; rms = Pegel auf AES-17-Skala (VU 0 = Ziel)
+    const float db = rms < -70.0f ? target - 20.0f : rms;   // Stille = blau; rms = normaler RMS in dBFS, 0 VU = Ziel
     const Colour wanted = levelColour (db, target);
     tint = tint.interpolatedWith (wanted, 0.25f);
     const float wantGlow = db > -4.0f ? 0.95f : db > target + 2.0f ? 0.5f : db > target - 2.0f ? 0.4f : 0.2f;
