@@ -54,6 +54,8 @@ jobs:
           cp -R "$ART/AU/Gain.component" "pkg/Gain/"
           cp -R "$ART/CLAP/Gain.clap" "pkg/Gain/"
           cp INSTALL.txt "pkg/Gain/INSTALL.txt"
+          cp docs/Gain-Manual-EN.pdf docs/Gain-Manual-DE.pdf "pkg/Gain/"
+          cp docs/Gain-Manual-EN.pdf docs/Gain-Manual-DE.pdf dist/
           ditto -c -k --keepParent "pkg/Gain" "dist/Gain-VST3-macOS-arm64.zip"
           ditto -c -k --keepParent "$ART/Standalone/Gain.app" "dist/Gain-Standalone-macOS-arm64.zip"
 

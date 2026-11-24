@@ -2,6 +2,8 @@
 
 Kleines Gain-Staging-Utility fuer den Kanalanfang (macOS Apple Silicon, VST3, Audio Unit, CLAP). Von Dani Koenig.
 
+**Manual (PDF):** [English](https://github.com/danikoenig/Gain/releases/latest/download/Gain-Manual-EN.pdf) | [Deutsch](https://github.com/danikoenig/Gain/releases/latest/download/Gain-Manual-DE.pdf)
+
 - Grosser Gain-Knopf, +/-35 dB
 - Meter: zwei Balken (links/rechts) mit RMS und True Peak uebereinander, Skala in dB relativ zum Ziel, Zielpegel per Dreieck, Farben blau / gruen / gelb / rot
 - Calibration: 5 Sekunden zuhoeren, Gain auf den Zielpegel setzen (Messung nach den Filtern)
