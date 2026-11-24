@@ -96,6 +96,15 @@ int main()
         std::printf ("      rms: %.2f\n", e.rmsDb.load());
         CHECK (std::abs (e.rmsDb.load() + 18.0) < 0.3, "rms meter");
     }
+    { // VU-Ballistik: nach 300 ms ca. 99 % (Abweichung < 0.2 dB), nach 100 ms deutlich darunter
+        auto s = sine (fs, 1000, std::pow (10.0, -18.0 / 20.0), 48000);
+        GainEngine e2; e2.prepare (fs);
+        float* b[1] = { s.data() + 20000 }; e2.process (b, 1, 14400, p);   // 300 ms
+        GainEngine e3; e3.prepare (fs);
+        float* c[1] = { s.data() + 30000 }; e3.process (c, 1, 4800, p);    // 100 ms
+        std::printf ("      VU after 300 ms: %.2f, after 100 ms: %.2f\n", e2.rmsDb.load(), e3.rmsDb.load());
+        CHECK (e2.rmsDb.load() > -18.3 && e3.rmsDb.load() < -20.0, "VU ballistics");
+    }
     { // Calibration: Sinus mit -3 dBFS Spitze (AES-17: -3), Ziel -18 => Gain -15 dB
         GainEngine e; e.prepare (fs); p.targetDb = -18.0f; p.gainDb = 7.0f;   // Gain darf die Messung nicht beeinflussen
         e.startCalibration();

@@ -36,7 +36,7 @@ void GainEngine::prepare (double sampleRate)
     dcR = std::exp (-2.0 * kPi * 5.0 / fs);                 // DC-Filter: 1. Ordnung, 5 Hz
     kRamp = (float) (1.0 - std::exp (-1.0 / (0.004 * fs)));  // 4 ms: Filter ein/aus ohne Klick
     kGain = (float) (1.0 - std::exp (-1.0 / (0.020 * fs)));  // 20 ms Gain-Glaettung
-    kRms = 1.0 - std::exp (-1.0 / (0.150 * fs));             // RMS-Anzeige: ca. 150 ms
+    kRms = 1.0 - std::exp (-1.0 / (0.065 * fs));             // VU-Ballistik: 99 % nach 300 ms
 
     for (int ph = 0; ph < 3; ++ph)
     {
@@ -64,7 +64,7 @@ void GainEngine::reset()
 {
     for (auto& c : ch)
     {
-        c.dcX1 = c.dcY1 = 0; c.ms = 0; c.idx = 0;
+        c.dcX1 = c.dcY1 = 0; c.vu = 0; c.idx = 0;
         c.lc25.reset(); c.lc100.reset(); c.hc18.reset(); c.hc10.reset();
         std::fill (std::begin (c.hist), std::end (c.hist), 0.0f);
     }
@@ -138,12 +138,12 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
             const float h18 = s.hc18.process (y), h10 = s.hc10.process (y);
             const float z = hcGain[0] * y + hcGain[1] * h18 + hcGain[2] * h10;
 
-            preSq += (double) z * z;          // Messpunkt fuer Calibration: nach den Filtern, vor dem Gain
+            preSq += std::abs ((double) z);   // Messpunkt fuer Calibration: nach den Filtern, vor dem Gain
 
             const float o = z * gainLin;
             data[c][i] = o;
 
-            s.ms += ((double) o * o - s.ms) * kRms;
+            s.vu += ((double) std::abs (o) - s.vu) * kRms;
             blockPeak = std::max (blockPeak, truePeakSample (s, o));
         }
 
@@ -152,8 +152,8 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
             calBlockSum += preSq / numCh;
             if (++calBlockPos >= calBlockLen)
             {
-                const double pw = calBlockSum / (double) calBlockLen;
-                if (10.0 * std::log10 (pw + 1.0e-20) > calGateDb) { calTotalPower += pw; ++calValid; }
+                const double avg = calBlockSum / (double) calBlockLen * vuSineScale;
+                if (20.0 * std::log10 (avg + 1.0e-10) + rmsOffsetDb > calGateDb) { calTotalPower += avg; ++calValid; }
                 calBlockSum = 0; calBlockPos = 0;
             }
             --calSamplesLeft;
@@ -161,9 +161,9 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
     }
 
     // Anzeigen
-    double ms = 0.0;
-    for (int c = 0; c < numCh; ++c) ms += ch[c].ms;
-    rmsDb = 10.0f * (float) std::log10 (ms / numCh + 1.0e-12) + rmsOffsetDb;
+    double vu = 0.0;
+    for (int c = 0; c < numCh; ++c) vu += ch[c].vu;
+    rmsDb = 20.0f * (float) std::log10 (vu / numCh * vuSineScale + 1.0e-6) + rmsOffsetDb;
 
     const double dt = (double) n / fs;
     if (blockPeak >= peakLin) { peakLin = blockPeak; peakHold = 1.5; }
@@ -179,7 +179,7 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
             calActive = false; calProgress = 0.0f;
             if (calValid >= 5)    // mindestens 0.5 s Signal
             {
-                const float measured = 10.0f * (float) std::log10 (calTotalPower / (double) calValid + 1.0e-20) + rmsOffsetDb;
+                const float measured = 20.0f * (float) std::log10 (calTotalPower / (double) calValid + 1.0e-10) + rmsOffsetDb;
                 calResultDb = std::max (-maxGainDb, std::min (maxGainDb, p.targetDb - measured));
                 calDone = true;
             }

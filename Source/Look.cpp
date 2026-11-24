@@ -200,15 +200,22 @@ void GainMeter::paint (Graphics& g)
 
     // Skala
     g.setFont (gainFont (8.5f * s, true));
-    for (float db : { 0.0f, -6.0f, -12.0f, -18.0f, -24.0f, -36.0f, -48.0f })
+    // Skala in VU relativ zum Ziel: 0 = Dreieck
+    for (float vu : { 3.0f, 0.0f, -3.0f, -6.0f, -10.0f, -20.0f, -30.0f })
     {
+        const float db = targetDb + vu;
+        if (db > GainDSP::meterMaxDb || db < GainDSP::meterMinDb) continue;
         const float y = yForDb (db);
         g.setColour (Colours::white.withAlpha (0.18f));
         g.drawHorizontalLine ((int) y, pkBar.getRight() + 1.0f * s, pkBar.getRight() + 4.0f * s);
         g.setColour (textDim);
-        g.drawText (String ((int) db), Rectangle<float> (pkBar.getRight() + 5.0f * s, y - 6.0f * s, 22.0f * s, 12.0f * s),
+        g.drawText ((vu > 0.0f ? "+" : "") + String ((int) vu), Rectangle<float> (pkBar.getRight() + 5.0f * s, y - 6.0f * s, 22.0f * s, 12.0f * s),
                     Justification::centredLeft);
     }
+
+    // 0 dBFS: feine Linie ueber den True-Peak-Balken
+    g.setColour (Colours::white.withAlpha (0.55f));
+    g.drawHorizontalLine ((int) yForDb (0.0f), pkBar.getX() - 1.0f * s, pkBar.getRight() + 1.0f * s);
 
     // Zielpegel: Linie ueber den RMS-Balken, Dreieck links (zum Ziehen)
     const float ty = yForDb (targetDb);

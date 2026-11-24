@@ -35,7 +35,7 @@ GainEditor::GainEditor (GainProcessor& p) : AudioProcessorEditor (&p), processor
     highBtn.setTooltip ("High cut: off / 18 kHz / 10 kHz (12 dB/oct)");
     lowBtn.onClick  = [this] { cycleChoice (ParamID::lowCut); };
     highBtn.onClick = [this] { cycleChoice (ParamID::highCut); };
-    calBtn.setTooltip ("Listens for 5 s and sets GAIN so the average level lands on the triangle");
+    calBtn.setTooltip ("Listens for 5 s and sets GAIN so the VU level lands on 0 (the triangle)");
     calBtn.onClick = [this]
     {
         auto& e = processor.getEngine();
@@ -95,7 +95,7 @@ void GainEditor::timerCallback()
 
     // Anzeigewerte, Farbe und Glow folgen dem RMS-Pegel relativ zum Zielpegel
     rmsShown = rms; peakShown = peak; targetShown = target;
-    const float db = rms < -70.0f ? target - 20.0f : rms;   // Stille = blau
+    const float db = rms < -70.0f ? target - 20.0f : rms;   // Stille = blau; rms = Pegel auf AES-17-Skala (VU 0 = Ziel)
     const Colour wanted = levelColour (db, target);
     tint = tint.interpolatedWith (wanted, 0.25f);
     const float wantGlow = db > -4.0f ? 0.95f : db > target + 2.0f ? 0.5f : db > target - 2.0f ? 0.4f : 0.2f;
@@ -163,13 +163,14 @@ void GainEditor::paint (Graphics& g)
 
     // Pegelzahlen oben rechts
     auto num = [] (float v) { return v < -90.0f ? String ("--") : String (v, 1); };
+    const String vuText = rmsShown < -90.0f ? String ("--") : (rmsShown - targetShown > 0.04f ? "+" : "") + String (rmsShown - targetShown, 1);
     g.setFont (gainFont (9.5f * scale, true));
     g.setColour (textDim);
-    g.drawText ("RMS", R (190, 14, 40, 12).toFloat(), Justification::centredRight);
-    g.drawText ("TRUE PEAK", R (190, 40, 70, 12).toFloat(), Justification::centredRight);
+    g.drawText ("VU", R (190, 14, 40, 12).toFloat(), Justification::centredRight);
+    g.drawText ("TRUE PEAK dBFS", R (150, 40, 110, 12).toFloat(), Justification::centredRight);
     g.setFont (gainFont (13.0f * scale, true));
     g.setColour (text);
-    g.drawText (num (rmsShown), R (262, 12, 82, 16).toFloat(), Justification::centredRight);
+    g.drawText (vuText, R (262, 12, 82, 16).toFloat(), Justification::centredRight);
     g.drawText (num (peakShown), R (262, 38, 82, 16).toFloat(), Justification::centredRight);
 
     g.setColour (textDim);

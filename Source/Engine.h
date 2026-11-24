@@ -12,7 +12,8 @@ namespace GainDSP
     constexpr float meterMinDb  = -48.0f;   // unteres Ende der Meter-Skala
     constexpr float meterMaxDb  = 3.0f;     // oberes Ende (True Peak kann ueber 0 liegen)
     constexpr float calSeconds  = 5.0f;
-    constexpr float rmsOffsetDb = 3.0103f;  // AES-17: Sinus mit -18 dBFS Spitze = -18 dB RMS-Anzeige (VU 0 bei CAL -18)
+    constexpr float rmsOffsetDb = 3.0103f;  // AES-17: Sinus mit -18 dBFS Spitze = -18 Anzeige (VU 0 bei CAL -18)
+    constexpr float vuSineScale = 1.1107f;  // Mittelwert gleichgerichtet -> Sinus-Effektivwert (pi / (2 sqrt 2))
     constexpr float calGateDb   = -55.0f;   // Bloecke leiser als das zaehlen bei der Messung nicht
     constexpr float lowCutHz[3]  = { 0.0f, 25.0f, 100.0f };
     constexpr float highCutHz[3] = { 0.0f, 18000.0f, 10000.0f };
@@ -78,7 +79,7 @@ private:
         Biquad lc25, lc100, hc18, hc10;
         float hist[16] = {};
         int idx = 0;
-        double ms = 0;
+        double vu = 0;   // VU-Ballistik: Mittelwert des gleichgerichteten Signals
     };
 
     // 4x True-Peak: gefensterte Sinc-Interpolation, 3 Zwischenwerte pro Sample

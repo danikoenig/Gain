@@ -118,7 +118,7 @@ Components), otherwise the plugin may show up twice.
 HOW TO USE (SHORT)
 - GAIN (big knob): +/-35 dB, 0 dB is the line at the top. Double-click = 0 dB.
   Set the level at the start of a channel so the plugins after it see the right input level.
-- METER (right): wide bar = RMS, AES-17 scale (about 150 ms; a -18 dBFS sine reads -18, like VUMT CAL -18 = 0 VU), thin bar = true peak (4x, with hold).
+- METER (right): wide bar = VU (300 ms ballistics, like VUMT in VU mode), thin bar = true peak (4x, with hold). The scale is in VU relative to the target: 0 = triangle.
   Colours: blue = too quiet, green = target, yellow = too hot, red = from about -1 dBFS.
 - TRIANGLE (next to the meter): drag it to your target level (default -18 dBFS).
   The colours of the meter, the knob and the whole plugin follow it.
@@ -283,7 +283,7 @@ Plug-Ins/Components), sonst erscheint das Plugin eventuell doppelt.
 KURZ ZUR BEDIENUNG
 - GAIN (grosser Knopf): +/-35 dB, 0 dB ist der Strich oben. Doppelklick = 0 dB.
   Am Kanalanfang einstellen, damit die Plugins danach den richtigen Pegel bekommen.
-- METER (rechts): breiter Balken = RMS, AES-17-Skala (ca. 150 ms; ein Sinus mit -18 dBFS zeigt -18, wie VUMT CAL -18 = 0 VU), schmaler Balken = True Peak (4x, mit Halten).
+- METER (rechts): breiter Balken = VU (Ballistik 300 ms, wie VUMT im VU-Modus), schmaler Balken = True Peak (4x, mit Halten). Die Skala zeigt VU relativ zum Ziel: 0 = Dreieck.
   Farben: blau = zu leise, gruen = Ziel, gelb = zu laut, rot = ab ca. -1 dBFS.
 - DREIECK (neben dem Meter): auf den Zielpegel ziehen (Standard -18 dBFS).
   Die Farben von Meter, Knopf und dem ganzen Plugin richten sich danach.

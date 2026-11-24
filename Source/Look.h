@@ -21,13 +21,13 @@ public:
     juce::Label* createSliderTextBox (juce::Slider&) override;
 };
 
-// Meter: breiter Balken = RMS, schmaler Balken = True Peak (mit Halten),
-// Dreieck links = Zielpegel (ziehen), Farben richten sich nach dem Zielpegel
+// Meter: breiter Balken = VU (Ballistik 300 ms), schmaler Balken = True Peak (mit Halten),
+// Dreieck links = Zielpegel = 0 VU (ziehen), Skala in VU relativ zum Ziel, Farben nach dem Zielpegel
 class GainMeter : public juce::Component
 {
 public:
     void setLevels (float rms, float peak) { rmsDb = rms; peakDb = peak; repaint(); }
-    void setTarget (float t) { if (t != targetDb) { targetDb = t; repaint(); } }
+    void setTarget (float t) { if (std::abs (t - targetDb) > 0.001f) { targetDb = t; repaint(); } }
     float getTarget() const { return targetDb; }
 
     // phase: 0 = Start, 1 = Ziehen, 2 = Ende
