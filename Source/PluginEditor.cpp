@@ -29,6 +29,16 @@ GainEditor::GainEditor (GainProcessor& p) : AudioProcessorEditor (&p), processor
         }
     };
 
+    meter.onModeChange = [this] (int m)
+    {
+        if (auto* par = processor.apvts.getParameter (ParamID::meterMode))
+        {
+            par->beginChangeGesture();
+            par->setValueNotifyingHost (par->convertTo0to1 ((float) m));
+            par->endChangeGesture();
+        }
+    };
+
     monoBtn.getProperties().set ("label", "MONO");
     lowBtn.getProperties().set ("label", "LOW CUT");
     highBtn.getProperties().set ("label", "HIGH CUT");
@@ -108,13 +118,18 @@ void GainEditor::timerCallback()
 
     // Anzeigewerte, Farbe und Glow folgen dem RMS-Pegel relativ zum Zielpegel
     rmsShown = rms; peakShown = peak; targetShown = target;
-    const float db = rms < -70.0f ? target - 20.0f : rms;   // Stille = blau; rms = echter RMS in dBFS
+    // Plugin-Farbe folgt einem langsam gemittelten Pegel (ca. 2 s), damit sie nicht im Takt flackert
+    const float rmsIn = rms < -70.0f ? target - 20.0f : rms;   // Stille = blau; rms = echter RMS in dBFS
+    if (slowDb < -150.0f) slowDb = rmsIn;
+    slowDb += (rmsIn - slowDb) * 0.0165f;
+    const float db = peak > -1.0f ? jmax (slowDb, -2.0f) : slowDb;   // echte Spitzen nahe 0 dBFS faerben trotzdem rot
     const Colour wanted = levelColour (db, target);
     tint = tint.interpolatedWith (wanted, 0.25f);
     const float wantGlow = db > -4.0f ? 0.95f : db > target + 2.0f ? 0.5f : db > target - 2.0f ? 0.4f : 0.2f;
     glow += (wantGlow - glow) * 0.2f;
 
     meter.setTarget (target);
+    meter.setMode (roundToInt (processor.apvts.getRawParameterValue (ParamID::meterMode)->load()));
     const float rmsCh[2] = { e.rmsDbCh[0].load(), e.rmsDbCh[1].load() };
     const float pkCh[2] = { e.peakDbCh[0].load(), e.peakDbCh[1].load() };
     meter.setLevels (rmsCh, pkCh);

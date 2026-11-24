@@ -21,8 +21,8 @@ public:
     juce::Label* createSliderTextBox (juce::Slider&) override;
 };
 
-// Meter wie bei Ableton: zwei Balken (links / rechts), jeder mit RMS (ca. 300 ms)
-// und True Peak (gedaempft darueber, mit Halten) uebereinander,
+// Meter: zwei Balken (links / rechts). Anzeige per Rechtsklick: RMS (Standard, trag), True Peak oder beides
+// uebereinander (RMS dunkler, True Peak heller, mit Halten),
 // Dreieck links = Zielpegel (ziehen), Skala in dB relativ zum Ziel (0 = Dreieck), Farben nach dem Zielpegel
 class GainMeter : public juce::Component
 {
@@ -32,6 +32,8 @@ public:
         for (int i = 0; i < 2; ++i) { rmsDb[i] = rms2[i]; peakDb[i] = peak2[i]; }
         repaint();
     }
+    void setMode (int m) { if (m != mode) { mode = m; repaint(); } }   // 0 RMS, 1 True Peak, 2 RMS + Peak
+    std::function<void (int mode)> onModeChange;
     void setTarget (float t) { if (std::abs (t - targetDb) > 0.001f) { targetDb = t; repaint(); } }
     float getTarget() const { return targetDb; }
 
@@ -56,6 +58,9 @@ private:
     void drag (const juce::MouseEvent&, int phase);
 
     void showPresetMenu();
+    void showModeMenu();
+    bool nearTriangle (const juce::MouseEvent&) const;
+    int mode = 0;
 
     float rmsDb[2] = { -100.0f, -100.0f }, peakDb[2] = { -100.0f, -100.0f }, targetDb = -18.0f;
     bool dragging = false, hoverTarget = false;

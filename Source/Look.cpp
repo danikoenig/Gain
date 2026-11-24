@@ -195,14 +195,14 @@ void GainMeter::paint (Graphics& g)
             const float yc = y + step * 0.5f;
             const float db = dbForY (yc);
             const auto base = levelColour (db, targetDb);
-            if (hasVu && yc >= yVu)        g.setColour (base.darker (0.45f));                    // RMS: dunkler
-            else if (hasPk && yc >= yPk)   g.setColour (base.brighter (0.5f).withAlpha (0.95f)); // True Peak: heller
+            if (mode != 1 && hasVu && yc >= yVu)        g.setColour (base.darker (mode == 0 ? 0.15f : 0.45f));   // RMS (allein: kraeftiger)
+            else if (mode != 0 && hasPk && yc >= yPk)   g.setColour (base.brighter (mode == 1 ? 0.2f : 0.5f).withAlpha (0.95f)); // True Peak: heller
             else                           g.setColour (base.withAlpha (0.13f));
             g.fillRect (bar.getX(), y, bar.getWidth(), step - 0.6f);
         }
         if (hasPk)
         {
-            g.setColour (Colours::white.withAlpha (0.9f));
+            g.setColour (Colours::white.withAlpha (mode == 0 ? 0.6f : 0.9f));
             g.fillRect (bar.getX(), yPk - 0.75f * s, bar.getWidth(), 1.5f * s);
         }
     };
@@ -211,10 +211,14 @@ void GainMeter::paint (Graphics& g)
 
     // Skala
     g.setFont (gainFont (8.5f * s, true));
-    // Skala in dB relativ zum Ziel: 0 = Dreieck
-    for (float vu : { 3.0f, 0.0f, -3.0f, -6.0f, -10.0f, -20.0f, -30.0f })
+    // Skala: RMS-Modi relativ zum Ziel (0 = Dreieck), True-Peak-Modus absolut in dBFS
+    const bool absolute = (mode == 1);
+    static const float relMarks[] = { 3.0f, 0.0f, -3.0f, -6.0f, -10.0f, -20.0f, -30.0f };
+    static const float absMarks[] = { 0.0f, -3.0f, -6.0f, -12.0f, -18.0f, -24.0f, -36.0f };
+    for (int mi = 0; mi < 7; ++mi)
     {
-        const float db = targetDb + vu;
+        const float vu = absolute ? absMarks[mi] : relMarks[mi];
+        const float db = absolute ? vu : targetDb + vu;
         if (db > GainDSP::meterMaxDb || db < GainDSP::meterMinDb) continue;
         const float y = yForDb (db);
         g.setColour (Colours::white.withAlpha (0.18f));
@@ -275,9 +279,32 @@ void GainMeter::showPresetMenu()
     });
 }
 
+bool GainMeter::nearTriangle (const MouseEvent& e) const
+{
+    return e.position.x < 22.0f * (float) getWidth() / 76.0f && std::abs (e.position.y - yForDb (targetDb)) < 12.0f;
+}
+
+void GainMeter::showModeMenu()
+{
+    PopupMenu m;
+    m.addSectionHeader ("Anzeige");
+    m.addItem (1, "RMS", true, mode == 0);
+    m.addItem (2, "True Peak", true, mode == 1);
+    m.addItem (3, "RMS + True Peak", true, mode == 2);
+    m.addSeparator();
+    m.addItem (10, "Zielpegel-Richtwerte: Rechtsklick auf das Dreieck", false);
+
+    m.showMenuAsync (PopupMenu::Options().withTargetComponent (this).withMinimumWidth (240),
+                     [safe = Component::SafePointer<GainMeter> (this)] (int result)
+    {
+        if (safe == nullptr || result < 1 || result > 3 || ! safe->onModeChange) return;
+        safe->onModeChange (result - 1);
+    });
+}
+
 void GainMeter::mouseDown (const MouseEvent& e)
 {
-    if (e.mods.isPopupMenu()) { showPresetMenu(); return; }
+    if (e.mods.isPopupMenu()) { if (nearTriangle (e)) showPresetMenu(); else showModeMenu(); return; }
     dragging = true;
     drag (e, 0);
 }
@@ -293,9 +320,8 @@ void GainMeter::mouseUp (const MouseEvent& e)
 
 void GainMeter::mouseMove (const MouseEvent& e)
 {
-    const bool nearTriangle = e.position.x < 22.0f * (float) getWidth() / 76.0f
-                              && std::abs (e.position.y - yForDb (targetDb)) < 12.0f;
-    if (nearTriangle != hoverTarget) { hoverTarget = nearTriangle; repaint(); }
+    const bool near = nearTriangle (e);
+    if (near != hoverTarget) { hoverTarget = near; repaint(); }
 }
 
 void GainMeter::mouseExit (const MouseEvent&)

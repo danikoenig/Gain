@@ -96,14 +96,14 @@ int main()
         std::printf ("      rms: %.2f\n", e.rmsDb.load());
         CHECK (std::abs (e.rmsDb.load() + 18.0) < 0.3, "rms meter");
     }
-    { // RMS-Ballistik: nach 300 ms fast voll (Abweichung < 0.4 dB), nach 100 ms deutlich darunter
-        auto s = sine (fs, 1000, std::pow (10.0, -15.0 / 20.0), 48000);
+    { // RMS-Ballistik: nach 900 ms fast voll (Abweichung < 0.4 dB), nach 100 ms deutlich darunter (Zeitkonstante 300 ms)
+        auto s = sine (fs, 1000, std::pow (10.0, -15.0 / 20.0), 96000);
         GainEngine e2; e2.prepare (fs);
-        float* b[1] = { s.data() + 20000 }; e2.process (b, 1, 14400, p);   // 300 ms
+        float* b[1] = { s.data() + 20000 }; e2.process (b, 1, 43200, p);   // 900 ms
         GainEngine e3; e3.prepare (fs);
         float* c[1] = { s.data() + 30000 }; e3.process (c, 1, 4800, p);    // 100 ms
-        std::printf ("      VU after 300 ms: %.2f, after 100 ms: %.2f\n", e2.rmsDb.load(), e3.rmsDb.load());
-        CHECK (e2.rmsDb.load() > -18.4 && e3.rmsDb.load() < -19.5, "RMS meter ballistics");
+        std::printf ("      VU after 900 ms: %.2f, after 100 ms: %.2f\n", e2.rmsDb.load(), e3.rmsDb.load());
+        CHECK (e2.rmsDb.load() > -18.4 && e3.rmsDb.load() < -21.0, "RMS meter ballistics");
     }
     { // Calibration: Sinus mit -3 dBFS Spitze (RMS -6), Ziel -18 => Gain -12 dB
         GainEngine e; e.prepare (fs); p.targetDb = -18.0f; p.gainDb = 7.0f;   // Gain darf die Messung nicht beeinflussen

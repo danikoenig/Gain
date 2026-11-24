@@ -1,5 +1,10 @@
 Free gain-staging utility for macOS (Apple Silicon), VST3, Audio Unit and CLAP. By Dani Koenig.
 
+### v1.4.0
+- **Meter display:** right-click the bars to choose RMS (default), True Peak or RMS + True Peak. RMS alone is calmer and matches the target triangle; the white hold line still shows the true peak. The choice is saved with the project. Presets for the target stay on a right-click on the triangle
+- RMS display is slower (time constant 300 ms), so it no longer jumps with every kick
+- The plugin colour (knob, buttons, glow) follows a slow average (about 2 s) instead of the fast level, so it no longer flickers in time with the beat. Real peaks close to 0 dBFS still turn it red
+
 ### v1.3.0
 - **Peak guard for CALIBRATE:** the gain is limited so the true peak stays below -3 dBFS, even if the RMS target is then not reached (button shows PEAK LIMIT for a moment). Helps with very peaky material such as drum loops
 - **Target triangle:** while you drag it (or hover it) a label shows the exact value, e.g. "TARGET -18.0 dBFS RMS". Right-click the meter for presets (-18, -16, -14, -12, -9, -6 dBFS RMS)

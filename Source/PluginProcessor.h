@@ -10,6 +10,7 @@ namespace ParamID
     inline constexpr const char* highCut = "highcut";
     inline constexpr const char* target  = "target";
     inline constexpr const char* mono    = "mono";
+    inline constexpr const char* meterMode = "metermode";
 }
 
 class GainProcessor : public juce::AudioProcessor, private juce::AsyncUpdater, private juce::Timer

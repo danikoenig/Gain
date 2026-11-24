@@ -32,7 +32,7 @@ private:
     std::unique_ptr<SA> gainAtt;
 
     juce::Colour tint = GainColours::blue;
-    float glow = 0.2f, scale = 1.0f, rmsShown = -100.0f, peakShown = -100.0f, targetShown = -18.0f;
+    float slowDb = -200.0f, glow = 0.2f, scale = 1.0f, rmsShown = -100.0f, peakShown = -100.0f, targetShown = -18.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GainEditor)
 };

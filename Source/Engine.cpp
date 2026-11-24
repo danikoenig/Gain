@@ -36,7 +36,7 @@ void GainEngine::prepare (double sampleRate)
     dcR = std::exp (-2.0 * kPi * 5.0 / fs);                 // DC-Filter: 1. Ordnung, 5 Hz
     kRamp = (float) (1.0 - std::exp (-1.0 / (0.004 * fs)));  // 4 ms: Filter ein/aus ohne Klick
     kGain = (float) (1.0 - std::exp (-1.0 / (0.020 * fs)));  // 20 ms Gain-Glaettung
-    kRms = 1.0 - std::exp (-1.0 / (0.100 * fs));             // RMS-Anzeige: Zeitkonstante 100 ms (ca. 300 ms bis fast voll)
+    kRms = 1.0 - std::exp (-1.0 / (0.300 * fs));             // RMS-Anzeige: Zeitkonstante 300 ms (ruhig, ca. 900 ms bis fast voll)
 
     for (int ph = 0; ph < 3; ++ph)
     {

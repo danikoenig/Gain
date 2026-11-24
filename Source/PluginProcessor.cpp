@@ -21,6 +21,9 @@ AudioProcessorValueTreeState::ParameterLayout GainProcessor::createLayout()
                     AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) { return String (v, 1) + " dBFS"; })));
 
     p.push_back (std::make_unique<AudioParameterBool> (ParameterID { ParamID::mono, 1 }, "Mono", false));
+    // Anzeige: 0 = RMS (Standard), 1 = True Peak, 2 = RMS + Peak
+    p.push_back (std::make_unique<AudioParameterChoice> (ParameterID { ParamID::meterMode, 1 }, "Meter Mode",
+                    StringArray { "RMS", "True Peak", "RMS + Peak" }, 0));
 
     return { p.begin(), p.end() };
 }
