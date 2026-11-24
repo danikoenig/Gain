@@ -146,7 +146,7 @@ void GainLookAndFeel::drawButtonBackground (Graphics& g, Button& b, const Colour
     const float progress = (float) (double) b.getProperties().getWithDefault ("progress", 0.0);
     const Colour col = Colour::fromString (b.getProperties().getWithDefault ("tint", blue.toString()).toString());
 
-    g.setColour (down ? cardBorder.brighter (0.2f) : highlighted ? cardBorder : inset);
+    g.setColour (down ? btnHover.brighter (0.15f) : highlighted ? btnHover : btn);
     g.fillRoundedRectangle (r, rad);
     if (active)
     {
@@ -173,15 +173,15 @@ void GainLookAndFeel::drawButtonText (Graphics& g, TextButton& b, bool, bool)
 
     if (label.isEmpty())
     {
-        g.setColour (text.withAlpha (0.92f));
+        g.setColour (btnText.withAlpha (0.92f));
         g.setFont (gainFont (11.0f * s, true));
         g.drawText (b.getButtonText(), r, Justification::centred);
         return;
     }
-    g.setColour (textDim);
+    g.setColour (btnTextDim);
     g.setFont (gainFont (9.5f * s, true));
     g.drawText (label, r.withTrimmedTop (6.0f * s).withHeight (12.0f * s), Justification::centred);
-    g.setColour (active ? text : textDim.brighter (0.2f));
+    g.setColour (active ? btnText : btnTextDim.interpolatedWith (btnText, 0.2f));
     g.setFont (gainFont (15.0f * s, true));
     g.drawText (state, r.withTrimmedTop (19.0f * s).withHeight (19.0f * s), Justification::centred);
 }

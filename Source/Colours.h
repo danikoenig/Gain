@@ -12,84 +12,86 @@ namespace GainColours
         const char* name = "JUCE";
         juce::Colour bgTop, bgBottom, card, cardBorder, inset, text, textDim, knobTrack, knobBody;
         juce::Colour blue, green, yellow, red;
-        juce::Colour frame { juce::Colours::transparentBlack };   // fester Rahmen ums Fenster (JUCE: Orange wie bei den anderen Plugins)
+        juce::Colour frame { juce::Colours::transparentBlack };   // fester Rahmen ums Fenster (transparent = keiner)
+        juce::Colour btn, btnHover, btnText, btnTextDim;          // Buttons (leer = aus inset/cardBorder/text abgeleitet)
         float radius = 6.0f;        // Eckenradius der Buttons und des Fensterrahmens
         float glowScale = 1.0f;     // Staerke des Leuchtens (Knob, Hintergrund, Rahmen)
         float titleSpacing = 12.0f; // Buchstabenabstand im Titel
-        bool ticks = false;         // feine Skala um den Knob (Industrial)
-        bool patterns = false;      // Warnzonen zusaetzlich als Muster (Farbenblind)
+        bool ticks = false;         // feine Skala um den Knob (Dark)
+        bool patterns = false;      // Warnzonen zusaetzlich als Muster (Colour-Blind)
     };
 
     inline const Theme& themeFor (int index)
     {
-        static const std::array<Theme, 5> all = []
+        static const std::array<Theme, 4> all = []
         {
-            std::array<Theme, 5> a;
+            std::array<Theme, 4> a;
+            auto C = [] (juce::uint32 v) { return juce::Colour (v); };
 
-            // 0: JUCE (das Original)
+            // 0: JUCE (das Original, mit orangem Rahmen wie die anderen Plugins)
             {
                 auto& t = a[0];
                 t.name = "JUCE";
-                t.bgTop = juce::Colour (0xff17181c);   t.bgBottom = juce::Colour (0xff0d0e11);
-                t.card = juce::Colour (0xff1d1f24);    t.cardBorder = juce::Colour (0xff2b2e35);
-                t.inset = juce::Colour (0xff121317);   t.text = juce::Colour (0xffeceef2);
-                t.textDim = juce::Colour (0xff7d828c); t.knobTrack = juce::Colour (0xff2c2f36);
-                t.knobBody = juce::Colour (0xff26282e);
-                t.blue = juce::Colour (0xff4d8dff);    t.green = juce::Colour (0xff3ddc84);
-                t.yellow = juce::Colour (0xffffc933);  t.red = juce::Colour (0xffff1f3f);
-                t.frame = juce::Colour (0xffff7a2f);
+                t.bgTop = C (0xff17181c);   t.bgBottom = C (0xff0d0e11);
+                t.card = C (0xff1d1f24);    t.cardBorder = C (0xff2b2e35);
+                t.inset = C (0xff121317);   t.text = C (0xffeceef2);
+                t.textDim = C (0xff7d828c); t.knobTrack = C (0xff2c2f36);
+                t.knobBody = C (0xff26282e);
+                t.blue = C (0xff4d8dff);    t.green = C (0xff3ddc84);
+                t.yellow = C (0xffffc933);  t.red = C (0xffff1f3f);
+                t.frame = C (0xffff7a2f);
             }
-            // 1: Ableton-inspiriert: helles Grau, flach, wenig Leuchten
+            // 1: Grey (an Abletons Grau angelehnt): alles Grau, Anzeigeflaechen dunkler, Buttons heller
             {
                 auto& t = a[1];
-                t.name = "Ableton";
-                t.bgTop = juce::Colour (0xffcbcbcb);   t.bgBottom = juce::Colour (0xffbdbdbd);
-                t.card = juce::Colour (0xffd2d2d2);    t.cardBorder = juce::Colour (0xff8e8e8e);
-                t.inset = juce::Colour (0xffa6a6a6);   t.text = juce::Colour (0xff141414);
-                t.textDim = juce::Colour (0xff4f4f4f); t.knobTrack = juce::Colour (0xff9a9a9a);
-                t.knobBody = juce::Colour (0xffdedede);
-                t.blue = juce::Colour (0xff2f78d6);    t.green = juce::Colour (0xff17a455);
-                t.yellow = juce::Colour (0xffe9a300);  t.red = juce::Colour (0xffd92626);
-                t.radius = 2.0f; t.glowScale = 0.25f; t.titleSpacing = 10.0f;
+                t.name = "Grey";
+                t.bgTop = C (0xff535353);   t.bgBottom = C (0xff494949);
+                t.card = C (0xff5c5c5c);    t.cardBorder = C (0xff2a2a2a);
+                t.inset = C (0xff1f1f1f);   t.text = C (0xffeeeeee);
+                t.textDim = C (0xffb4b4b4); t.knobTrack = C (0xff3b3b3b);
+                t.knobBody = C (0xff676767);
+                t.blue = C (0xff55a9e6);    t.green = C (0xff8bd35c);
+                t.yellow = C (0xffe6b84a);  t.red = C (0xffe0463c);
+                t.frame = C (0xff151515);
+                t.btn = C (0xff717171);     t.btnHover = C (0xff808080);
+                t.btnText = C (0xff101010); t.btnTextDim = C (0xff333333);
+                t.radius = 2.0f; t.glowScale = 0.3f; t.titleSpacing = 10.0f;
             }
-            // 2: Bitwig-inspiriert: dunkles Grau, flache Flaechen, kleine Radien
+            // 2: Dark: schwarz, kalt wie eine Fliegeruhr mit Stahl, dunkles Blau / Gruen, Uebersteuerung blutrot
             {
                 auto& t = a[2];
-                t.name = "Bitwig";
-                t.bgTop = juce::Colour (0xff2e2e31);   t.bgBottom = juce::Colour (0xff232325);
-                t.card = juce::Colour (0xff3a3a3e);    t.cardBorder = juce::Colour (0xff505055);
-                t.inset = juce::Colour (0xff1b1b1d);   t.text = juce::Colour (0xffe9e9ea);
-                t.textDim = juce::Colour (0xff909096); t.knobTrack = juce::Colour (0xff48484d);
-                t.knobBody = juce::Colour (0xff3c3c40);
-                t.blue = juce::Colour (0xff3fa9f5);    t.green = juce::Colour (0xff8bd450);
-                t.yellow = juce::Colour (0xffff9f1a);  t.red = juce::Colour (0xffff3b30);
-                t.radius = 3.0f; t.glowScale = 0.45f; t.titleSpacing = 8.0f;
+                t.name = "Dark";
+                t.bgTop = C (0xff0a0a0b);   t.bgBottom = C (0xff030304);
+                t.card = C (0xff111214);    t.cardBorder = C (0xff373b40);
+                t.inset = C (0xff050506);   t.text = C (0xffeef1f4);
+                t.textDim = C (0xff868d95); t.knobTrack = C (0xff24272b);
+                t.knobBody = C (0xff141518);
+                t.blue = C (0xff2c5fa8);    t.green = C (0xff2fa36b);
+                t.yellow = C (0xffcf7a1a);  t.red = C (0xffb0101c);
+                t.frame = C (0xff6d747c);
+                t.btnHover = C (0xff1a1c1f);
+                t.radius = 1.5f; t.glowScale = 0.35f; t.titleSpacing = 18.0f; t.ticks = true;
             }
-            // 3: Dark Industrial: mattschwarz, Stahl, kalt, scharfe Ecken, Skala am Knob
+            // 3: Colour-Blind: Blau - Weiss - Orange - Violett statt Rot/Gruen, plus Muster in der Warnzone
             {
                 auto& t = a[3];
-                t.name = "Industrial";
-                t.bgTop = juce::Colour (0xff0c0c0d);   t.bgBottom = juce::Colour (0xff040405);
-                t.card = juce::Colour (0xff141415);    t.cardBorder = juce::Colour (0xff3d4045);
-                t.inset = juce::Colour (0xff070708);   t.text = juce::Colour (0xfff2f4f6);
-                t.textDim = juce::Colour (0xff8b9198); t.knobTrack = juce::Colour (0xff2b2e32);
-                t.knobBody = juce::Colour (0xff1a1b1d);
-                t.blue = juce::Colour (0xff6c7a89);    t.green = juce::Colour (0xffeef2f6);
-                t.yellow = juce::Colour (0xffe8a33d);  t.red = juce::Colour (0xffff2a1a);
-                t.radius = 1.5f; t.glowScale = 0.18f; t.titleSpacing = 18.0f; t.ticks = true;
-            }
-            // 4: Farbenblind: Blau - Weiss - Orange - Violett statt Rot/Gruen, plus Muster in der Warnzone
-            {
-                auto& t = a[4];
                 t.name = "Colour-Blind";
-                t.bgTop = juce::Colour (0xff17181c);   t.bgBottom = juce::Colour (0xff0d0e11);
-                t.card = juce::Colour (0xff1d1f24);    t.cardBorder = juce::Colour (0xff3a3e46);
-                t.inset = juce::Colour (0xff121317);   t.text = juce::Colour (0xfff4f4f4);
-                t.textDim = juce::Colour (0xff8d929c); t.knobTrack = juce::Colour (0xff2c2f36);
-                t.knobBody = juce::Colour (0xff26282e);
-                t.blue = juce::Colour (0xff3a7bd5);    t.green = juce::Colour (0xfff2f2f2);
-                t.yellow = juce::Colour (0xffe69f00);  t.red = juce::Colour (0xffcc79a7);
+                t.bgTop = C (0xff17181c);   t.bgBottom = C (0xff0d0e11);
+                t.card = C (0xff1d1f24);    t.cardBorder = C (0xff3a3e46);
+                t.inset = C (0xff121317);   t.text = C (0xfff4f4f4);
+                t.textDim = C (0xff8d929c); t.knobTrack = C (0xff2c2f36);
+                t.knobBody = C (0xff26282e);
+                t.blue = C (0xff3a7bd5);    t.green = C (0xfff2f2f2);
+                t.yellow = C (0xffe69f00);  t.red = C (0xffcc79a7);
                 t.patterns = true;
+            }
+            // Buttons: ohne eigene Angabe wie bisher (dunkle Flaeche, Rand beim Ueberfahren)
+            for (auto& t : a)
+            {
+                if (t.btn.getAlpha() == 0)        t.btn = t.inset;
+                if (t.btnHover.getAlpha() == 0)   t.btnHover = t.cardBorder;
+                if (t.btnText.getAlpha() == 0)    t.btnText = t.text;
+                if (t.btnTextDim.getAlpha() == 0) t.btnTextDim = t.textDim;
             }
             return a;
         }();
@@ -99,7 +101,7 @@ namespace GainColours
     inline juce::StringArray themeNames()
     {
         juce::StringArray n;
-        for (int i = 0; i < 5; ++i) n.add (themeFor (i).name);
+        for (int i = 0; i < 4; ++i) n.add (themeFor (i).name);
         return n;
     }
 
@@ -127,4 +129,4 @@ namespace GainColours
     [[maybe_unused]] const juce::Colour bgTop = (T).bgTop, bgBottom = (T).bgBottom, card = (T).card, \
         cardBorder = (T).cardBorder, inset = (T).inset, text = (T).text, textDim = (T).textDim, \
         knobTrack = (T).knobTrack, knobBody = (T).knobBody, blue = (T).blue, green = (T).green, \
-        yellow = (T).yellow, red = (T).red
+        yellow = (T).yellow, red = (T).red, btn = (T).btn, btnHover = (T).btnHover, btnText = (T).btnText, btnTextDim = (T).btnTextDim

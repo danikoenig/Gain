@@ -106,7 +106,7 @@ void GainEditor::showThemeMenu()
     for (int i = 0; i < names.size(); ++i)
         m.addItem (i + 1, names[i], true, i == themeIndex);
 
-    m.showMenuAsync (PopupMenu::Options().withTargetComponent (this).withMinimumWidth (200),
+    m.showMenuAsync (PopupMenu::Options().withTargetScreenArea (localAreaToGlobal (R (110, 10, 140, 48))).withMinimumWidth (180),
                      [safe = Component::SafePointer<GainEditor> (this)] (int result)
     {
         if (safe == nullptr || result <= 0) return;
@@ -121,8 +121,8 @@ void GainEditor::showThemeMenu()
 
 void GainEditor::mouseDown (const MouseEvent& e)
 {
-    // Rechtsklick auf die Kopfzeile: Theme waehlen
-    if (e.mods.isPopupMenu() && e.position.y < 72.0f * scale) showThemeMenu();
+    // Klick (links oder rechts) auf die Kopfzeile: Theme waehlen, Menue direkt unter dem Titel
+    if (e.position.y < 72.0f * scale) showThemeMenu();
 }
 
 void GainEditor::cycleChoice (const char* id)

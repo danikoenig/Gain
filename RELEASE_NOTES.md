@@ -1,5 +1,9 @@
 Free gain-staging utility for macOS (Apple Silicon), VST3, Audio Unit and CLAP. By Dani Koenig.
 
+### v1.5.1
+- **Themes reduced to four and reworked:** JUCE (original, orange frame), Grey (all greys: darker display areas, lighter buttons), Dark (black, cold, steel frame, dial scale around the knob, darker blue and green, blood-red overload), Colour-Blind. Projects saved with v1.5.0 may show a different theme once; choose it again
+- **Theme menu:** click (left or right) the header; the menu now opens directly under the title
+
 ### v1.5.0
 - **Themes:** right-click the header (the GAIN title) to choose the look: JUCE (the original, now with the orange frame like the other plugins), Ableton (light grey, flat), Bitwig (dark grey, flat), Industrial (matte black and steel, sharp corners, dial scale around the knob), Colour-Blind (blue / white / orange / violet instead of red / green, with a striped pattern in the warning zone). The choice is saved with the project
 - **Sweet spot:** after CALIBRATE, the exact gain it found is marked on the knob ring (small green tick). When you turn the knob across that value, the whole plugin flashes green briefly and stays a little greener while you sit on it, so you can easily get back without calibrating again. The value is saved with the project
