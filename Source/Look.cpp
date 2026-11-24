@@ -184,7 +184,7 @@ void GainMeter::paint (Graphics& g)
     g.fillRoundedRectangle (Rectangle<float> (barsLeft - 2.0f * s, a.getY() - 2.0f * s,
                                               barsRight - barsLeft + 4.0f * s, a.getHeight() + 4.0f * s), 4.0f * s);
 
-    // Wie Ableton: je Kanal VU (dunkler) und True Peak (heller darueber) in einem Balken,
+    // Wie Ableton: je Kanal RMS (dunkler) und True Peak (heller darueber) in einem Balken,
     // dazu ein feiner Strich auf der gehaltenen Spitze
     auto drawBar = [&] (Rectangle<float> bar, float vuDb, float peakDbIn)
     {
@@ -196,7 +196,7 @@ void GainMeter::paint (Graphics& g)
             const float yc = y + step * 0.5f;
             const float db = dbForY (yc);
             const auto base = levelColour (db, targetDb);
-            if (hasVu && yc >= yVu)        g.setColour (base.darker (0.45f));                    // VU: dunkler
+            if (hasVu && yc >= yVu)        g.setColour (base.darker (0.45f));                    // RMS: dunkler
             else if (hasPk && yc >= yPk)   g.setColour (base.brighter (0.5f).withAlpha (0.95f)); // True Peak: heller
             else                           g.setColour (base.withAlpha (0.13f));
             g.fillRect (bar.getX(), y, bar.getWidth(), step - 0.6f);
@@ -212,7 +212,7 @@ void GainMeter::paint (Graphics& g)
 
     // Skala
     g.setFont (gainFont (8.5f * s, true));
-    // Skala in VU relativ zum Ziel: 0 = Dreieck
+    // Skala in dB relativ zum Ziel: 0 = Dreieck
     for (float vu : { 3.0f, 0.0f, -3.0f, -6.0f, -10.0f, -20.0f, -30.0f })
     {
         const float db = targetDb + vu;

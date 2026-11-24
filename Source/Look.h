@@ -21,9 +21,9 @@ public:
     juce::Label* createSliderTextBox (juce::Slider&) override;
 };
 
-// Meter wie bei Ableton: zwei Balken (links / rechts), jeder mit VU (Ballistik 300 ms, volle Farbe)
+// Meter wie bei Ableton: zwei Balken (links / rechts), jeder mit RMS (ca. 300 ms)
 // und True Peak (gedaempft darueber, mit Halten) uebereinander,
-// Dreieck links = Zielpegel = 0 VU (ziehen), Skala in VU relativ zum Ziel, Farben nach dem Zielpegel
+// Dreieck links = Zielpegel (ziehen), Skala in dB relativ zum Ziel (0 = Dreieck), Farben nach dem Zielpegel
 class GainMeter : public juce::Component
 {
 public:

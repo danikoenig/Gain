@@ -13,7 +13,6 @@ namespace GainDSP
     constexpr float meterMaxDb  = 3.0f;     // oberes Ende (True Peak kann ueber 0 liegen)
     constexpr float calSeconds  = 5.0f;
     constexpr float rmsOffsetDb = 0.0f;     // Anzeige = normaler RMS in dBFS (Sinus mit -15 dBFS Spitze = -18 dBFS RMS)
-    constexpr float vuSineScale = 1.1107f;  // Mittelwert gleichgerichtet -> Sinus-Effektivwert (pi / (2 sqrt 2))
     constexpr float calGateDb   = -55.0f;   // Bloecke leiser als das zaehlen bei der Messung nicht
     constexpr float lowCutHz[3]  = { 0.0f, 25.0f, 100.0f };
     constexpr float highCutHz[3] = { 0.0f, 18000.0f, 10000.0f };
@@ -27,7 +26,7 @@ struct GainParams
     float gainDb   = 0.0f;    // -35..+35
     int   lowCut   = 0;       // 0 = aus, 1 = 25 Hz, 2 = 100 Hz
     int   highCut  = 0;       // 0 = aus, 1 = 18 kHz, 2 = 10 kHz
-    float targetDb = -18.0f;  // Zielpegel (VU 0, dBFS) fuer Calibration und Farben
+    float targetDb = -18.0f;  // Zielpegel (RMS in dBFS) fuer Calibration und Farben
     bool  mono     = false;   // Stereo -> Mono ((L+R)/2), nach den Filtern, vor Messung und Gain
 };
 
@@ -82,7 +81,7 @@ private:
         Biquad lc25, lc100, hc18, hc10;
         float hist[16] = {};
         int idx = 0;
-        double vu = 0;   // VU-Ballistik: Mittelwert des gleichgerichteten Signals
+        double ms = 0;   // gleitender Mittelwert der Leistung (x^2) -> echter RMS
     };
 
     // 4x True-Peak: gefensterte Sinc-Interpolation, 3 Zwischenwerte pro Sample

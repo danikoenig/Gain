@@ -1,5 +1,9 @@
 Free gain-staging utility for macOS (Apple Silicon), VST3, Audio Unit and CLAP. By Dani Koenig.
 
+### v1.2.1
+- **Fix:** CALIBRATE now measures the true RMS (power). Before, it used a rectified average, which reads far too low on peaky material such as drum loops, so the gain ended up several dB too high (peaks above 0 dBFS). The meter bars show the same RMS
+- Wording: the meter shows RMS (about 300 ms) and the scale is in dB relative to the target
+
 ### v1.2.0
 - Meter like Ableton: two bars (left / right), each with VU (darker) and true peak (lighter) on top, with a hold line
 

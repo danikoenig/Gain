@@ -118,7 +118,7 @@ Components), otherwise the plugin may show up twice.
 HOW TO USE (SHORT)
 - GAIN (big knob): +/-35 dB, 0 dB is the line at the top. Double-click = 0 dB.
   Set the level at the start of a channel so the plugins after it see the right input level.
-- METER (right): two bars (left / right) like in Ableton: each shows VU (300 ms ballistics, darker) with the true peak (4x, lighter) above it, plus a thin line on the held peak. The scale is in VU relative to the target: 0 = triangle. The target is a plain RMS level in dBFS (default -18 dBFS RMS = a sine with -15 dBFS peak).
+- METER (right): two bars (left / right) like in Ableton: each shows the RMS level (about 300 ms, darker) with the true peak (4x, lighter) above it, plus a thin line on the held peak. The scale is in dB relative to the target: 0 = triangle. The target is a plain RMS level in dBFS (default -18 dBFS RMS = a sine with -15 dBFS peak).
   Colours: blue = too quiet, green = target, yellow = too hot, red = from about -1 dBFS.
 - TRIANGLE (next to the meter): drag it to your target level (default -18 dBFS).
   The colours of the meter, the knob and the whole plugin follow it.
@@ -284,7 +284,7 @@ Plug-Ins/Components), sonst erscheint das Plugin eventuell doppelt.
 KURZ ZUR BEDIENUNG
 - GAIN (grosser Knopf): +/-35 dB, 0 dB ist der Strich oben. Doppelklick = 0 dB.
   Am Kanalanfang einstellen, damit die Plugins danach den richtigen Pegel bekommen.
-- METER (rechts): zwei Balken (links / rechts) wie bei Ableton: je Kanal VU (Ballistik 300 ms, dunkler), darueber heller der True Peak (4x), dazu ein feiner Strich auf der gehaltenen Spitze. Die Skala zeigt VU relativ zum Ziel: 0 = Dreieck. Das Ziel ist ein normaler RMS-Pegel in dBFS (Standard -18 dBFS RMS = Sinus mit -15 dBFS Spitze).
+- METER (rechts): zwei Balken (links / rechts) wie bei Ableton: je Kanal der RMS-Pegel (ca. 300 ms, dunkler), darueber heller der True Peak (4x), dazu ein feiner Strich auf der gehaltenen Spitze. Die Skala zeigt dB relativ zum Ziel: 0 = Dreieck. Das Ziel ist ein normaler RMS-Pegel in dBFS (Standard -18 dBFS RMS = Sinus mit -15 dBFS Spitze).
   Farben: blau = zu leise, gruen = Ziel, gelb = zu laut, rot = ab ca. -1 dBFS.
 - DREIECK (neben dem Meter): auf den Zielpegel ziehen (Standard -18 dBFS).
   Die Farben von Meter, Knopf und dem ganzen Plugin richten sich danach.

@@ -46,7 +46,7 @@ GainEditor::GainEditor (GainProcessor& p) : AudioProcessorEditor (&p), processor
     };
     lowBtn.onClick  = [this] { cycleChoice (ParamID::lowCut); };
     highBtn.onClick = [this] { cycleChoice (ParamID::highCut); };
-    calBtn.setTooltip ("Listens for 5 s and sets GAIN so the VU level lands on 0 (the triangle)");
+    calBtn.setTooltip ("Listens for 5 s and sets GAIN so the average (RMS) level lands on the triangle");
     calBtn.onClick = [this]
     {
         auto& e = processor.getEngine();
@@ -108,7 +108,7 @@ void GainEditor::timerCallback()
 
     // Anzeigewerte, Farbe und Glow folgen dem RMS-Pegel relativ zum Zielpegel
     rmsShown = rms; peakShown = peak; targetShown = target;
-    const float db = rms < -70.0f ? target - 20.0f : rms;   // Stille = blau; rms = normaler RMS in dBFS, 0 VU = Ziel
+    const float db = rms < -70.0f ? target - 20.0f : rms;   // Stille = blau; rms = echter RMS in dBFS
     const Colour wanted = levelColour (db, target);
     tint = tint.interpolatedWith (wanted, 0.25f);
     const float wantGlow = db > -4.0f ? 0.95f : db > target + 2.0f ? 0.5f : db > target - 2.0f ? 0.4f : 0.2f;

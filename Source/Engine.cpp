@@ -36,7 +36,7 @@ void GainEngine::prepare (double sampleRate)
     dcR = std::exp (-2.0 * kPi * 5.0 / fs);                 // DC-Filter: 1. Ordnung, 5 Hz
     kRamp = (float) (1.0 - std::exp (-1.0 / (0.004 * fs)));  // 4 ms: Filter ein/aus ohne Klick
     kGain = (float) (1.0 - std::exp (-1.0 / (0.020 * fs)));  // 20 ms Gain-Glaettung
-    kRms = 1.0 - std::exp (-1.0 / (0.065 * fs));             // VU-Ballistik: 99 % nach 300 ms
+    kRms = 1.0 - std::exp (-1.0 / (0.100 * fs));             // RMS-Anzeige: Zeitkonstante 100 ms (ca. 300 ms bis fast voll)
 
     for (int ph = 0; ph < 3; ++ph)
     {
@@ -64,7 +64,7 @@ void GainEngine::reset()
 {
     for (auto& c : ch)
     {
-        c.dcX1 = c.dcY1 = 0; c.vu = 0; c.idx = 0;
+        c.dcX1 = c.dcY1 = 0; c.ms = 0; c.idx = 0;
         c.lc25.reset(); c.lc100.reset(); c.hc18.reset(); c.hc10.reset();
         std::fill (std::begin (c.hist), std::end (c.hist), 0.0f);
     }
@@ -154,12 +154,12 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
         {
             auto& s = ch[c];
             const float z = zc[c];
-            preSq += std::abs ((double) z);   // Messpunkt fuer Calibration: nach Filtern und Mono, vor dem Gain
+            preSq += (double) z * z;          // Messpunkt fuer Calibration: nach Filtern und Mono, vor dem Gain (Leistung -> echter RMS)
 
             const float o = z * gainLin;
             data[c][i] = o;
 
-            s.vu += ((double) std::abs (o) - s.vu) * kRms;
+            s.ms += ((double) o * o - s.ms) * kRms;
             blockPeak[c] = std::max (blockPeak[c], truePeakSample (s, o));
         }
 
@@ -168,8 +168,8 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
             calBlockSum += preSq / numCh;
             if (++calBlockPos >= calBlockLen)
             {
-                const double avg = calBlockSum / (double) calBlockLen * vuSineScale;
-                if (20.0 * std::log10 (avg + 1.0e-10) + rmsOffsetDb > calGateDb) { calTotalPower += avg; ++calValid; }
+                const double pw = calBlockSum / (double) calBlockLen;
+                if (10.0 * std::log10 (pw + 1.0e-20) + rmsOffsetDb > calGateDb) { calTotalPower += pw; ++calValid; }
                 calBlockSum = 0; calBlockPos = 0;
             }
             --calSamplesLeft;
@@ -177,9 +177,9 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
     }
 
     // Anzeigen
-    double vu = 0.0;
-    for (int c = 0; c < numCh; ++c) vu += ch[c].vu;
-    rmsDb = 20.0f * (float) std::log10 (vu / numCh * vuSineScale + 1.0e-6) + rmsOffsetDb;
+    double ms = 0.0;
+    for (int c = 0; c < numCh; ++c) ms += ch[c].ms;
+    rmsDb = 10.0f * (float) std::log10 (ms / numCh + 1.0e-12) + rmsOffsetDb;
 
     // True Peak je Kanal mit Halten (1.5 s) und Abfall (ca. 20 dB/s)
     const double dt = (double) n / fs;
@@ -190,7 +190,7 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
         else if ((peakHold[c] -= dt) <= 0.0) peakLin[c] *= (float) std::pow (10.0, -dt);
         peakMax = std::max (peakMax, peakLin[c]);
         peakDbCh[c] = GainDSP::toDb (peakLin[c]);
-        rmsDbCh[c] = 20.0f * (float) std::log10 (ch[c].vu * vuSineScale + 1.0e-6) + rmsOffsetDb;
+        rmsDbCh[c] = 10.0f * (float) std::log10 (ch[c].ms + 1.0e-12) + rmsOffsetDb;
     }
     if (numCh == 1) { peakDbCh[1] = peakDbCh[0].load(); rmsDbCh[1] = rmsDbCh[0].load(); }   // Mono-Spur: beide Balken gleich
     peakDb = GainDSP::toDb (peakMax);
@@ -204,7 +204,7 @@ void GainEngine::process (float* const* data, int numCh, int n, const GainParams
             calActive = false; calProgress = 0.0f;
             if (calValid >= 5)    // mindestens 0.5 s Signal
             {
-                const float measured = 20.0f * (float) std::log10 (calTotalPower / (double) calValid + 1.0e-10) + rmsOffsetDb;
+                const float measured = 10.0f * (float) std::log10 (calTotalPower / (double) calValid + 1.0e-20) + rmsOffsetDb;
                 calResultDb = std::max (-maxGainDb, std::min (maxGainDb, p.targetDb - measured));
                 calDone = true;
             }
