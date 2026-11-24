@@ -1,0 +1,13 @@
+Gain - free gain-staging utility
+by Dani Koenig
+
+This installs Gain as:
+- VST3:       /Library/Audio/Plug-Ins/VST3   (Bitwig, Ableton Live, Cubase, Reaper ...)
+- Audio Unit: /Library/Audio/Plug-Ins/Components   (Logic Pro, GarageBand)
+- CLAP:       /Library/Audio/Plug-Ins/CLAP   (Bitwig, Reaper ...)
+
+Requirements: Apple Silicon Mac (M1 or newer), macOS 11 or newer.
+
+---
+
+Installiert Gain als VST3 und als Audio Unit (für Logic Pro und GarageBand).

@@ -1,0 +1,124 @@
+#include "../Source/Engine.h"
+#include <cstdio>
+#include <vector>
+#include <cmath>
+
+static int fails = 0;
+#define CHECK(c, msg) do { if (!(c)) { std::printf ("FAIL: %s\n", msg); ++fails; } else std::printf ("ok:   %s\n", msg); } while (0)
+
+static std::vector<float> sine (double fs, double f, double amp, int n, double dc = 0.0)
+{
+    std::vector<float> v (n);
+    for (int i = 0; i < n; ++i) v[i] = (float) (dc + amp * std::sin (2.0 * M_PI * f * i / fs));
+    return v;
+}
+static double rmsDb (const std::vector<float>& v, int skip)
+{
+    double s = 0; for (size_t i = skip; i < v.size(); ++i) s += (double) v[i] * v[i];
+    return 10.0 * std::log10 (s / (v.size() - skip) + 1e-20);
+}
+static std::vector<float> run (GainEngine& e, std::vector<float> in, const GainParams& p)
+{
+    float* ch[1] = { in.data() };
+    const int blk = 512;
+    for (size_t i = 0; i < in.size(); i += blk)
+    {
+        float* c[1] = { in.data() + i };
+        e.process (c, 1, (int) std::min<size_t> (blk, in.size() - i), p);
+    }
+    (void) ch;
+    return in;
+}
+
+int main()
+{
+    const double fs = 48000.0;
+    GainParams p;
+
+    { // DC wird entfernt
+        GainEngine e; e.prepare (fs);
+        auto out = run (e, sine (fs, 1000, 0.1, 96000, 0.3), p);
+        double mean = 0; for (size_t i = 48000; i < out.size(); ++i) mean += out[i]; mean /= (out.size() - 48000);
+        CHECK (std::abs (mean) < 1e-3, "DC offset removed");
+    }
+    { // Gain
+        GainEngine e; e.prepare (fs); p.gainDb = 12.0f;
+        auto in = sine (fs, 1000, 0.1, 96000);
+        auto out = run (e, in, p);
+        CHECK (std::abs (rmsDb (out, 48000) - rmsDb (in, 48000) - 12.0) < 0.1, "gain +12 dB");
+        p.gainDb = 0.0f;
+    }
+    { // Low-Cut 25 Hz: 25 Hz um ca. -3 dB, 1 kHz unveraendert
+        GainEngine e; e.prepare (fs); p.lowCut = 1;
+        auto a = run (e, sine (fs, 25, 0.5, 96000), p);
+        GainEngine e2; e2.prepare (fs);
+        auto b = run (e2, sine (fs, 1000, 0.5, 96000), p);
+        auto in25 = sine (fs, 25, 0.5, 96000), in1k = sine (fs, 1000, 0.5, 96000);
+        const double d25 = rmsDb (a, 48000) - rmsDb (in25, 48000), d1k = rmsDb (b, 48000) - rmsDb (in1k, 48000);
+        std::printf ("      25Hz: %.2f dB, 1k: %.2f dB\n", d25, d1k);
+        CHECK (std::abs (d25 + 3.0) < 0.6 && std::abs (d1k) < 0.1, "low cut 25 Hz");
+        p.lowCut = 0;
+    }
+    { // Low-Cut 100 Hz
+        GainEngine e; e.prepare (fs); p.lowCut = 2;
+        auto in = sine (fs, 100, 0.5, 96000);
+        auto a = run (e, in, p);
+        const double d = rmsDb (a, 48000) - rmsDb (in, 48000);
+        std::printf ("      100Hz: %.2f dB\n", d);
+        CHECK (std::abs (d + 3.0) < 0.6, "low cut 100 Hz");
+        p.lowCut = 0;
+    }
+    { // High-Cut 10 kHz und 18 kHz
+        for (int s = 1; s <= 2; ++s)
+        {
+            GainEngine e; e.prepare (fs); p.highCut = s;
+            const double fc = s == 1 ? 18000.0 : 10000.0;
+            auto in = sine (fs, fc, 0.5, 96000);
+            auto a = run (e, in, p);
+            const double d = rmsDb (a, 48000) - rmsDb (in, 48000);
+            std::printf ("      high cut %g: %.2f dB\n", fc, d);
+            CHECK (std::abs (d + 3.0) < 1.5, s == 1 ? "high cut 18k" : "high cut 10k");
+        }
+        p.highCut = 0;
+    }
+    { // True Peak: Sinus mit fs/4 bei Phase 45 Grad: Sample-Peak 0.707, True Peak 1.0
+        GainEngine e; e.prepare (fs);
+        std::vector<float> v (48000);
+        for (size_t i = 0; i < v.size(); ++i) v[i] = (float) std::sin (2.0 * M_PI * (fs / 4.0) * i / fs + M_PI / 4.0);
+        run (e, v, p);
+        const float pk = e.peakDb.load();
+        std::printf ("      true peak: %.2f dBFS (Sample-Peak -3.01)\n", pk);
+        CHECK (pk > -0.6 && pk < 0.3, "true peak sees inter-sample peak");
+    }
+    { // RMS-Anzeige: Sinus -18 dBFS Spitze => -21 dBFS RMS
+        GainEngine e; e.prepare (fs);
+        run (e, sine (fs, 1000, std::pow (10.0, -18.0 / 20.0), 96000), p);
+        std::printf ("      rms: %.2f\n", e.rmsDb.load());
+        CHECK (std::abs (e.rmsDb.load() + 21.0) < 0.3, "rms meter");
+    }
+    { // Calibration: Signal bei ca. -6 dB RMS, Ziel -18 => Gain -12 dB
+        GainEngine e; e.prepare (fs); p.targetDb = -18.0f; p.gainDb = 7.0f;   // Gain darf die Messung nicht beeinflussen
+        e.startCalibration();
+        auto in = sine (fs, 440, std::pow (10.0, -3.0 / 20.0), 48000 * 7);   // RMS = -6 dBFS
+        run (e, in, p);
+        float g = 0; const bool done = e.popCalibrationResult (g);
+        std::printf ("      calibration gain: %.2f\n", g);
+        CHECK (done && std::abs (g + 12.0f) < 0.3f, "calibration result -12 dB");
+    }
+    { // Calibration bei Stille: Fehler, kein Ergebnis
+        GainEngine e; e.prepare (fs);
+        e.startCalibration();
+        run (e, std::vector<float> (48000 * 6, 0.0f), p);
+        float g; const bool done = e.popCalibrationResult (g);
+        CHECK (! done && e.popCalibrationFailed(), "calibration fails on silence");
+    }
+    { // Calibration clamp: sehr leises Signal => max +35 dB
+        GainEngine e; e.prepare (fs); p.targetDb = -6.0f;
+        e.startCalibration();
+        run (e, sine (fs, 440, std::pow (10.0, -50.0 / 20.0), 48000 * 6), p);
+        float g = 0; e.popCalibrationResult (g);
+        CHECK (std::abs (g - 35.0f) < 0.01f, "calibration clamps to +35 dB");
+    }
+    std::printf (fails ? "\n%d FAILED\n" : "\nall passed\n", fails);
+    return fails ? 1 : 0;
+}
