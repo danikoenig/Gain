@@ -1,5 +1,8 @@
 Free gain-staging utility for macOS (Apple Silicon), VST3, Audio Unit and CLAP. By Dani Koenig.
 
+### v1.1.1
+- Cleaner header: big centred GAIN title; the fast numeric readouts and the target text are gone; footer shows "by Dani Koenig" and the version
+
 ### v1.1.0
 - New MONO button (first in the row): sums left and right to (L+R)/2 before the meter, calibration and gain; buttons now in signal order: MONO, LOW CUT, HIGH CUT, CALIBRATE
 

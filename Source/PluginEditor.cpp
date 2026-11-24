@@ -148,7 +148,6 @@ void GainEditor::timerCallback()
     calBtn.setButtonText (cal ? "LISTENING" : ticks > 0 ? "NO SIGNAL" : "CALIBRATE");
     calBtn.repaint();
 
-    repaint (R (0, 0, designW, 84));   // Pegelzahlen
     repaint (R (0, 84, designW, 300));
 }
 
@@ -165,37 +164,25 @@ void GainEditor::paint (Graphics& g)
                                        tint.withAlpha (0.0f), c.x + rad, c.y, true));
     g.fillAll();
 
-    // Titel
+    // Titel: gross, mittig
     g.setColour (text);
-    g.setFont (gainFont (44.0f * scale, true));
+    g.setFont (gainFont (60.0f * scale, true));
     {
         const String title = "GAIN";
-        const float spacing = 7.0f * scale;
-        float x = 18.0f * scale;
+        const float spacing = 12.0f * scale;
+        float wTot = 0.0f;
+        for (int i = 0; i < title.length(); ++i)
+            wTot += g.getCurrentFont().getStringWidthFloat (String::charToString (title[i])) + spacing;
+        wTot -= spacing;
+        float x = ((float) getWidth() - wTot) * 0.5f;
         for (int i = 0; i < title.length(); ++i)
         {
             const auto s = String::charToString (title[i]);
             const float gw = g.getCurrentFont().getStringWidthFloat (s);
-            g.drawText (s, Rectangle<float> (x, 9.0f * scale, gw + 4.0f, 50.0f * scale), Justification::centredLeft);
+            g.drawText (s, Rectangle<float> (x, 8.0f * scale, gw + 4.0f, 68.0f * scale), Justification::centredLeft);
             x += gw + spacing;
         }
     }
-
-    // Pegelzahlen oben rechts
-    auto num = [] (float v) { return v < -90.0f ? String ("--") : String (v, 1); };
-    const String vuText = rmsShown < -90.0f ? String ("--") : (rmsShown - targetShown > 0.04f ? "+" : "") + String (rmsShown - targetShown, 1);
-    g.setFont (gainFont (9.5f * scale, true));
-    g.setColour (textDim);
-    g.drawText ("VU", R (190, 14, 40, 12).toFloat(), Justification::centredRight);
-    g.drawText ("TRUE PEAK dBFS", R (150, 40, 110, 12).toFloat(), Justification::centredRight);
-    g.setFont (gainFont (13.0f * scale, true));
-    g.setColour (text);
-    g.drawText (vuText, R (262, 12, 82, 16).toFloat(), Justification::centredRight);
-    g.drawText (num (peakShown), R (262, 38, 82, 16).toFloat(), Justification::centredRight);
-
-    g.setColour (textDim);
-    g.setFont (gainFont (10.5f * scale, true));
-    g.drawText ("TARGET " + String (targetShown, 1) + " dBFS", R (200, 366, 144, 14).toFloat(), Justification::centredRight);
 
     // Trennlinie
     g.setColour (cardBorder);
@@ -203,7 +190,7 @@ void GainEditor::paint (Graphics& g)
 
     g.setColour (textDim);
     g.setFont (gainFont (9.5f * scale, true));
-    g.drawText ("by Dani Koenig", R (0, 448, designW, 12).toFloat(), Justification::centred);
+    g.drawText (String::fromUTF8 ("by Dani Koenig  \xc2\xb7  v") + JucePlugin_VersionString, R (0, 448, designW, 12).toFloat(), Justification::centred);
 }
 
 void GainEditor::paintOverChildren (Graphics& g)
