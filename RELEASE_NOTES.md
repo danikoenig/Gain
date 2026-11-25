@@ -1,5 +1,8 @@
 Free gain-staging utility for macOS (Apple Silicon), VST3, Audio Unit and CLAP. By Dani Koenig.
 
+### v1.6.0
+- **Frame:** the orange frame is now 4 px wide and follows the rounded bottom corners of the macOS window, so the gap at the bottom left is gone. The resize grip stays visible on top of it
+
 ### v1.5.4
 - **Fix:** the PDF manuals are now really attached to the release
 

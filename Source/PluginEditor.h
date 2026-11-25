@@ -23,6 +23,7 @@ private:
     void showThemeMenu();
 
     static constexpr float designW = 360.0f, designH = 452.0f;
+    float frameWidth() const noexcept { return 4.0f * scale; }
 
     GainProcessor& processor;
     GainLookAndFeel lnf;

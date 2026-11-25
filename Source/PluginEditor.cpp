@@ -283,6 +283,21 @@ void GainEditor::paint (Graphics& g)
         g.drawText (byText, Rectangle<float> (x, 44.0f * scale, smallW + 6.0f, 16.0f * scale), Justification::centredLeft);
     }
 
+    // Fester Rahmen wie bei den anderen Plugins. Oben eckig (Titelleiste des Hosts), unten mit dem Eckenradius
+    // der macOS-Fenster gerundet, damit der Rahmen die Fensterecken nahtlos nachzeichnet
+    if (th->frame.getAlpha() > 0)
+    {
+        const float fw = frameWidth(), cr = 10.0f * scale;
+        const auto full = getLocalBounds().toFloat();
+        Path ring;
+        ring.addRoundedRectangle (full.getX(), full.getY(), full.getWidth(), full.getHeight(), cr, cr, false, false, true, true);
+        ring.addRoundedRectangle (full.getX() + fw, full.getY() + fw, full.getWidth() - 2 * fw, full.getHeight() - 2 * fw,
+                                  jmax (2.0f, cr - fw), jmax (2.0f, cr - fw), false, false, true, true);
+        ring.setUsingNonZeroWinding (false);
+        g.setColour (th->frame);
+        g.fillPath (ring);
+    }
+
     // Trennlinie
     g.setColour (cardBorder);
     g.drawHorizontalLine (roundToInt (380.0f * scale), 16.0f * scale, (designW - 16.0f) * scale);
@@ -311,14 +326,11 @@ void GainEditor::paintOverChildren (Graphics& g)
         g.drawText (line1, box, Justification::centred);
     }
 
-    auto r = getLocalBounds().toFloat().reduced (1.0f);
+    auto r = getLocalBounds().toFloat();
     if (th->frame.getAlpha() > 0)
-    {
-        // fester Rahmen wie bei den anderen Plugins, der Pegel-Schein sitzt knapp innen
-        g.setColour (th->frame.withAlpha (0.9f));
-        g.drawRoundedRectangle (r, th->radius * scale, 2.0f);
-        r = r.reduced (3.5f * scale);
-    }
+        r = r.reduced (frameWidth() + 2.0f * scale);
+    else
+        r = r.reduced (1.0f);
     g.setColour (shownTint.withAlpha ((0.08f + 0.6f * shownGlow * shownGlow) * jmax (gs, 0.5f)));
     g.drawRoundedRectangle (r, th->radius * scale, 1.5f);
 }
